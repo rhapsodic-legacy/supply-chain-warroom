@@ -172,3 +172,39 @@ async def seeded_client(_create_tables):
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as ac:
         yield ac
+
+
+# ---------------------------------------------------------------------------
+# Mock Anthropic client for agent tests
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def mock_anthropic(monkeypatch):
+    """Patch the Anthropic client with a configurable mock.
+
+    Every module that calls ``anthropic.AsyncAnthropic()`` will receive
+    the same mock instance, so scenarios configured here are shared
+    across orchestrator and specialist agent calls within a single test.
+    """
+    from tests.mock_anthropic import MockAsyncAnthropic
+
+    mock = MockAsyncAnthropic()
+
+    # Patch at the module level where each agent imports anthropic
+    monkeypatch.setattr(
+        "app.agents.orchestrator.anthropic.AsyncAnthropic", lambda **kw: mock
+    )
+    monkeypatch.setattr(
+        "app.agents.risk_monitor.anthropic.AsyncAnthropic", lambda **kw: mock
+    )
+    monkeypatch.setattr(
+        "app.agents.execution_agent.anthropic.AsyncAnthropic", lambda **kw: mock
+    )
+    monkeypatch.setattr(
+        "app.agents.strategy_agent.anthropic.AsyncAnthropic", lambda **kw: mock
+    )
+    monkeypatch.setattr(
+        "app.agents.simulation_agent.anthropic.AsyncAnthropic", lambda **kw: mock
+    )
+    return mock
