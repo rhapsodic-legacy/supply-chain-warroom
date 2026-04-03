@@ -8,15 +8,14 @@ from __future__ import annotations
 
 import json
 import uuid
-from dataclasses import asdict
 from datetime import datetime
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import ShippingRoute, Simulation, Supplier
 from app.simulation.engine import SimulationResult, run_simulation
-from app.simulation.network import SupplyChainNetwork, build_network_from_db
+from app.simulation.network import build_network_from_db
 from app.simulation.scenarios import (
     PRESET_SCENARIOS,
     create_scenario_from_params,
@@ -64,22 +63,16 @@ async def run_monte_carlo(
         return json.dumps({"error": "Provide either scenario_name or scenario_params."})
 
     # Build network from current DB state
-    suppliers_result = await db.execute(
-        select(Supplier).where(Supplier.is_active.is_(True))
-    )
+    suppliers_result = await db.execute(select(Supplier).where(Supplier.is_active.is_(True)))
     suppliers = list(suppliers_result.scalars().all())
 
-    routes_result = await db.execute(
-        select(ShippingRoute).where(ShippingRoute.is_active.is_(True))
-    )
+    routes_result = await db.execute(select(ShippingRoute).where(ShippingRoute.is_active.is_(True)))
     routes = list(routes_result.scalars().all())
 
     network = build_network_from_db(suppliers, routes)
 
     # Run simulation
-    sim_result: SimulationResult = run_simulation(
-        network, scenario, iterations=iterations
-    )
+    sim_result: SimulationResult = run_simulation(network, scenario, iterations=iterations)
 
     # Persist to DB
     def _stats_dict(stats) -> dict:
@@ -160,14 +153,10 @@ async def run_monte_carlo(
 
 async def query_network_stats(db: AsyncSession) -> str:
     """Return a high-level summary of the supply chain network graph."""
-    suppliers_result = await db.execute(
-        select(Supplier).where(Supplier.is_active.is_(True))
-    )
+    suppliers_result = await db.execute(select(Supplier).where(Supplier.is_active.is_(True)))
     suppliers = list(suppliers_result.scalars().all())
 
-    routes_result = await db.execute(
-        select(ShippingRoute).where(ShippingRoute.is_active.is_(True))
-    )
+    routes_result = await db.execute(select(ShippingRoute).where(ShippingRoute.is_active.is_(True)))
     routes = list(routes_result.scalars().all())
 
     network = build_network_from_db(suppliers, routes)

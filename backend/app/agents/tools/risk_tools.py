@@ -17,7 +17,6 @@ from app.models import (
     DemandSignal,
     Order,
     RiskEvent,
-    RiskEventImpact,
     Supplier,
 )
 
@@ -109,9 +108,7 @@ async def score_suppliers(
         risk_from_exposure = min(order_exposure / 500_000.0, 1.0)
 
         composite = (
-            0.40 * risk_from_reliability
-            + 0.30 * risk_from_events
-            + 0.30 * risk_from_exposure
+            0.40 * risk_from_reliability + 0.30 * risk_from_events + 0.30 * risk_from_exposure
         )
 
         scored.append(
@@ -125,9 +122,12 @@ async def score_suppliers(
                 "order_exposure_usd": round(order_exposure, 2),
                 "composite_risk_score": round(composite, 4),
                 "risk_tier": (
-                    "critical" if composite > 0.7
-                    else "high" if composite > 0.5
-                    else "medium" if composite > 0.3
+                    "critical"
+                    if composite > 0.7
+                    else "high"
+                    if composite > 0.5
+                    else "medium"
+                    if composite > 0.3
                     else "low"
                 ),
             }
@@ -143,11 +143,7 @@ async def fetch_risk_signals(db: AsyncSession) -> str:
     Signals are inputs the Risk Monitor uses to detect emerging threats.
     """
     # Recent risk events (last 30 active or recently created)
-    events_stmt = (
-        select(RiskEvent)
-        .order_by(RiskEvent.created_at.desc())
-        .limit(20)
-    )
+    events_stmt = select(RiskEvent).order_by(RiskEvent.created_at.desc()).limit(20)
     events_result = await db.execute(events_stmt)
     events = events_result.scalars().all()
 
@@ -155,9 +151,7 @@ async def fetch_risk_signals(db: AsyncSession) -> str:
     anomaly_stmt = (
         select(DemandSignal)
         .where(DemandSignal.actual_qty.isnot(None))
-        .where(
-            func.abs(DemandSignal.variance_pct) > 20.0
-        )
+        .where(func.abs(DemandSignal.variance_pct) > 20.0)
         .order_by(DemandSignal.signal_date.desc())
         .limit(20)
     )

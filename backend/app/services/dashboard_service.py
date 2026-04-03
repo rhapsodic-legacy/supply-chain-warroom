@@ -36,9 +36,7 @@ async def get_overview(db: AsyncSession) -> dict:
     )
     critical_risk_events = critical_risks_q.scalar() or 0
 
-    delivered_q = await db.execute(
-        select(func.count(Order.id)).where(Order.status == "delivered")
-    )
+    delivered_q = await db.execute(select(func.count(Order.id)).where(Order.status == "delivered"))
     delivered = delivered_q.scalar() or 0
     avg_fill_rate = (delivered / total_orders * 100) if total_orders > 0 else 0.0
 

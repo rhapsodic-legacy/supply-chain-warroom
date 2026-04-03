@@ -15,7 +15,9 @@ async def list_demand_signals(
     limit: int = Query(200, ge=1, le=1000),
     db: AsyncSession = Depends(get_db),
 ):
-    return await demand_service.list_demand_signals(db, product_id=product_id, region=region, limit=limit)
+    return await demand_service.list_demand_signals(
+        db, product_id=product_id, region=region, limit=limit
+    )
 
 
 @router.get("/summary", response_model=list[DemandSummary])

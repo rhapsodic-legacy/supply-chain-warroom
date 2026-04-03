@@ -181,6 +181,7 @@ TOOLS: list[dict[str, Any]] = [
 # Tool execution dispatcher
 # ---------------------------------------------------------------------------
 
+
 async def _execute_tools(response: anthropic.types.Message, db: AsyncSession) -> list[dict]:
     """Execute tool calls from a model response, return tool_result blocks."""
     tool_results = []
@@ -220,15 +221,14 @@ async def _execute_tools(response: anthropic.types.Message, db: AsyncSession) ->
             logger.exception("Risk Monitor tool '%s' failed", name)
             result = json.dumps({"error": str(exc)})
 
-        tool_results.append(
-            {"type": "tool_result", "tool_use_id": tool_id, "content": result}
-        )
+        tool_results.append({"type": "tool_result", "tool_use_id": tool_id, "content": result})
     return tool_results
 
 
 # ---------------------------------------------------------------------------
 # Agent entry point
 # ---------------------------------------------------------------------------
+
 
 def _extract_response(response: anthropic.types.Message) -> dict:
     """Pull text and action metadata from a final model response."""

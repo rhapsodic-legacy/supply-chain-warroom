@@ -5,8 +5,6 @@ against a seeded database.  No mocking is applied -- all database
 operations are real against the in-memory SQLite test database.
 """
 
-import pytest
-
 
 # =========================================================================
 # Flow 1: Risk Detection -> Dashboard Update
@@ -229,10 +227,6 @@ class TestCrossEntityConsistency:
         suppliers = resp.json()
         assert len(suppliers) > 0
 
-        known_regions = {
-            "East Asia", "Southeast Asia", "South Asia", "Middle East",
-            "Europe", "North America", "South America", "Africa", "Oceania",
-        }
         for supplier in suppliers:
             assert supplier["region"], f"Supplier {supplier['id']} has empty region"
             # Verify region is from a known set (flexible -- just check non-empty)

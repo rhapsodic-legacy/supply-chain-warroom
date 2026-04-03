@@ -26,9 +26,7 @@ async def list_risk_events(
 
 async def get_risk_event(db: AsyncSession, event_id: str) -> RiskEvent | None:
     stmt = (
-        select(RiskEvent)
-        .where(RiskEvent.id == event_id)
-        .options(selectinload(RiskEvent.impacts))
+        select(RiskEvent).where(RiskEvent.id == event_id).options(selectinload(RiskEvent.impacts))
     )
     result = await db.execute(stmt)
     return result.scalar_one_or_none()

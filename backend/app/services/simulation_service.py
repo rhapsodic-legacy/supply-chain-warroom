@@ -9,9 +9,7 @@ from app.schemas import SimulationCreate
 
 
 async def list_simulations(db: AsyncSession) -> list[Simulation]:
-    result = await db.execute(
-        select(Simulation).order_by(Simulation.created_at.desc())
-    )
+    result = await db.execute(select(Simulation).order_by(Simulation.created_at.desc()))
     return list(result.scalars().all())
 
 

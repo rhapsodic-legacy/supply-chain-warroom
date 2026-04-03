@@ -5,27 +5,60 @@ from __future__ import annotations
 import random
 import uuid
 
-from app.seed.constants import REGIONS, PRODUCT_CATALOG
+from app.seed.constants import REGIONS
 
 # ---------------------------------------------------------------------------
 # Fictional company name components
 # ---------------------------------------------------------------------------
 _PREFIXES = [
-    "Apex", "Nexus", "Zenith", "Vanguard", "Horizon", "Pinnacle", "Meridian",
-    "Summit", "Titan", "Atlas", "Orion", "Nova", "Vertex", "Catalyst",
-    "Precision", "Stellar", "Phoenix", "Cobalt", "Sapphire", "Crimson",
+    "Apex",
+    "Nexus",
+    "Zenith",
+    "Vanguard",
+    "Horizon",
+    "Pinnacle",
+    "Meridian",
+    "Summit",
+    "Titan",
+    "Atlas",
+    "Orion",
+    "Nova",
+    "Vertex",
+    "Catalyst",
+    "Precision",
+    "Stellar",
+    "Phoenix",
+    "Cobalt",
+    "Sapphire",
+    "Crimson",
 ]
 _SUFFIXES_ASIA = [
-    "Manufacturing Co.", "Electronics Ltd.", "Industrial Corp.", "Tech Group",
-    "Components Co.", "Precision Works", "Global Industries", "Supply Co.",
+    "Manufacturing Co.",
+    "Electronics Ltd.",
+    "Industrial Corp.",
+    "Tech Group",
+    "Components Co.",
+    "Precision Works",
+    "Global Industries",
+    "Supply Co.",
 ]
 _SUFFIXES_WEST = [
-    "Industries GmbH", "Manufacturing S.A.", "Components Ltd.", "Technologies Inc.",
-    "Industrial Group", "Precision AG", "Systems B.V.", "Engineering SpA",
+    "Industries GmbH",
+    "Manufacturing S.A.",
+    "Components Ltd.",
+    "Technologies Inc.",
+    "Industrial Group",
+    "Precision AG",
+    "Systems B.V.",
+    "Engineering SpA",
 ]
 _SUFFIXES_AMERICAS = [
-    "Manufacturing LLC", "Components Inc.", "Industries Corp.", "Supply Co.",
-    "Fabrication Ltd.", "Technologies S.A.",
+    "Manufacturing LLC",
+    "Components Inc.",
+    "Industries Corp.",
+    "Supply Co.",
+    "Fabrication Ltd.",
+    "Technologies S.A.",
 ]
 
 # Region-based parameter ranges
@@ -92,19 +125,21 @@ def generate_suppliers(seed: int = 42) -> list[dict]:
 
             capacity = rng.randint(3000, 25000)
 
-            suppliers.append({
-                "id": str(uuid.UUID(int=rng.getrandbits(128))),
-                "name": name,
-                "country": loc["country"],
-                "region": region,
-                "city": loc["city"],
-                "reliability_score": reliability,
-                "base_lead_time_days": lead_days,
-                "lead_time_variance": variance,
-                "cost_multiplier": cost_mult,
-                "capacity_units": capacity,
-                "is_active": True if rng.random() > 0.05 else False,
-            })
+            suppliers.append(
+                {
+                    "id": str(uuid.UUID(int=rng.getrandbits(128))),
+                    "name": name,
+                    "country": loc["country"],
+                    "region": region,
+                    "city": loc["city"],
+                    "reliability_score": reliability,
+                    "base_lead_time_days": lead_days,
+                    "lead_time_variance": variance,
+                    "cost_multiplier": cost_mult,
+                    "capacity_units": capacity,
+                    "is_active": True if rng.random() > 0.05 else False,
+                }
+            )
 
     return suppliers
 
@@ -136,12 +171,14 @@ def generate_supplier_products(
         for prod in chosen:
             # Unit price = unit_cost * supplier cost_multiplier * small random factor
             price = prod["unit_cost"] * sup["cost_multiplier"] * rng.uniform(0.95, 1.15)
-            links.append({
-                "id": str(uuid.UUID(int=rng.getrandbits(128))),
-                "supplier_id": sup["id"],
-                "product_id": prod["id"],
-                "unit_price": round(price, 2),
-                "min_order_qty": rng.choice([50, 100, 200, 500, 1000]),
-            })
+            links.append(
+                {
+                    "id": str(uuid.UUID(int=rng.getrandbits(128))),
+                    "supplier_id": sup["id"],
+                    "product_id": prod["id"],
+                    "unit_price": round(price, 2),
+                    "min_order_qty": rng.choice([50, 100, 200, 500, 1000]),
+                }
+            )
 
     return links

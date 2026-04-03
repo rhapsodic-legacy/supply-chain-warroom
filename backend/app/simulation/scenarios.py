@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 # Core data structures
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class Disruption:
     """A single disruption event within a scenario."""
@@ -36,6 +37,7 @@ class Scenario:
 # ---------------------------------------------------------------------------
 # Preset scenarios
 # ---------------------------------------------------------------------------
+
 
 def suez_canal_closure(route_ids_asia_europe: list[str] | None = None) -> Scenario:
     """21-day closure of all Asia -> Europe ocean routes (e.g. via Suez).
@@ -145,6 +147,7 @@ PRESET_SCENARIOS: dict[str, Scenario] = {
 # Custom scenario builder
 # ---------------------------------------------------------------------------
 
+
 def create_scenario_from_params(params: dict) -> Scenario:
     """Build a ``Scenario`` from a free-form API request dictionary.
 
@@ -175,8 +178,7 @@ def create_scenario_from_params(params: dict) -> Scenario:
         preset_key = params["preset"]
         if preset_key not in PRESET_SCENARIOS:
             raise ValueError(
-                f"Unknown preset '{preset_key}'. "
-                f"Available: {list(PRESET_SCENARIOS.keys())}"
+                f"Unknown preset '{preset_key}'. Available: {list(PRESET_SCENARIOS.keys())}"
             )
         scenario = PRESET_SCENARIOS[preset_key]
         # Allow overriding time horizon

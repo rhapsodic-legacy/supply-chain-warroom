@@ -214,17 +214,14 @@ ORCHESTRATOR_TOOLS: list[dict[str, Any]] = [
 # Direct database tools (no specialist agent needed)
 # ---------------------------------------------------------------------------
 
+
 async def _query_decision_log(
     db: AsyncSession,
     agent_type: str | None = None,
     limit: int = 10,
 ) -> str:
     """Query the agent decision log from the database."""
-    stmt = (
-        select(AgentDecision)
-        .order_by(AgentDecision.decided_at.desc())
-        .limit(limit)
-    )
+    stmt = select(AgentDecision).order_by(AgentDecision.decided_at.desc()).limit(limit)
     if agent_type:
         stmt = stmt.where(AgentDecision.agent_type == agent_type)
 
@@ -268,9 +265,7 @@ async def _get_war_room_context(db: AsyncSession) -> str:
 
     # Recent simulations
     sim_result = await db.execute(
-        select(Simulation)
-        .order_by(Simulation.created_at.desc())
-        .limit(5)
+        select(Simulation).order_by(Simulation.created_at.desc()).limit(5)
     )
     recent_sims = sim_result.scalars().all()
 
@@ -294,8 +289,9 @@ async def _get_war_room_context(db: AsyncSession) -> str:
 
     # Order pipeline summary
     pipeline_result = await db.execute(
-        select(Order.status, func.count(Order.id), func.sum(Order.total_cost))
-        .group_by(Order.status)
+        select(Order.status, func.count(Order.id), func.sum(Order.total_cost)).group_by(
+            Order.status
+        )
     )
     pipeline = [
         {"status": row[0], "count": row[1], "total_cost": float(row[2] or 0)}
@@ -340,6 +336,7 @@ async def _get_war_room_context(db: AsyncSession) -> str:
 # ---------------------------------------------------------------------------
 # Tool execution dispatcher
 # ---------------------------------------------------------------------------
+
 
 async def _execute_orchestrator_tool(
     tool_name: str,
@@ -386,6 +383,7 @@ async def _execute_orchestrator_tool(
 # Orchestrator agent loop
 # ---------------------------------------------------------------------------
 
+
 async def run_orchestrator(db: AsyncSession, message: str) -> dict:
     """Run the orchestrator agent loop.
 
@@ -411,9 +409,7 @@ async def run_orchestrator(db: AsyncSession, message: str) -> dict:
                 if block.type != "tool_use":
                     continue
 
-                tool_result_str = await _execute_orchestrator_tool(
-                    block.name, block.input, db
-                )
+                tool_result_str = await _execute_orchestrator_tool(block.name, block.input, db)
 
                 all_actions.append(
                     {
@@ -449,6 +445,7 @@ async def run_orchestrator(db: AsyncSession, message: str) -> dict:
 # ---------------------------------------------------------------------------
 # FastAPI entry point (called by routers/agents.py)
 # ---------------------------------------------------------------------------
+
 
 async def handle_chat(message: str, db: AsyncSession) -> ChatResponse:
     """Entry point called by the /api/v1/agents/chat endpoint."""

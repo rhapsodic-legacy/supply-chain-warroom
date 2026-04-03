@@ -4,7 +4,7 @@ import uuid
 
 import pytest
 
-from app.seed.constants import PRODUCT_CATALOG, TRADE_LANES
+from app.seed.constants import PRODUCT_CATALOG
 from app.seed.orders import generate_orders
 from app.seed.risk_events import generate_risk_events
 from app.seed.routes import generate_routes
@@ -24,10 +24,17 @@ class TestGenerateSuppliers:
     def test_required_fields_present(self):
         suppliers = generate_suppliers(seed=42)
         required_fields = [
-            "id", "name", "country", "region", "city",
-            "reliability_score", "base_lead_time_days",
-            "lead_time_variance", "cost_multiplier",
-            "capacity_units", "is_active",
+            "id",
+            "name",
+            "country",
+            "region",
+            "city",
+            "reliability_score",
+            "base_lead_time_days",
+            "lead_time_variance",
+            "cost_multiplier",
+            "capacity_units",
+            "is_active",
         ]
         for s in suppliers:
             for field in required_fields:
@@ -83,12 +90,23 @@ class TestGenerateRoutes:
     def test_route_has_required_fields(self):
         routes = generate_routes(seed=42)
         required = [
-            "id", "name", "origin_port", "origin_country",
-            "destination_port", "destination_country",
-            "transport_mode", "base_transit_days",
-            "transit_variance_days", "cost_per_kg",
-            "risk_score", "capacity_tons", "is_active",
-            "origin_lat", "origin_lon", "dest_lat", "dest_lon",
+            "id",
+            "name",
+            "origin_port",
+            "origin_country",
+            "destination_port",
+            "destination_country",
+            "transport_mode",
+            "base_transit_days",
+            "transit_variance_days",
+            "cost_per_kg",
+            "risk_score",
+            "capacity_tons",
+            "is_active",
+            "origin_lat",
+            "origin_lon",
+            "dest_lat",
+            "dest_lon",
         ]
         for r in routes:
             for field in required:
@@ -122,9 +140,7 @@ class TestGenerateRiskEvents:
         events, _ = self._generate()
         valid_severities = {"low", "medium", "high", "critical"}
         for e in events:
-            assert e["severity"] in valid_severities, (
-                f"Invalid severity: {e['severity']}"
-            )
+            assert e["severity"] in valid_severities, f"Invalid severity: {e['severity']}"
 
     def test_impacts_reference_valid_events(self):
         events, impacts = self._generate()
@@ -158,8 +174,15 @@ class TestGenerateOrders:
     def test_valid_statuses(self):
         orders = self._generate()
         valid = {
-            "pending", "confirmed", "in_production", "shipped",
-            "in_transit", "customs", "delivered", "delayed", "cancelled",
+            "pending",
+            "confirmed",
+            "in_production",
+            "shipped",
+            "in_transit",
+            "customs",
+            "delivered",
+            "delayed",
+            "cancelled",
         }
         for o in orders:
             assert o["status"] in valid, f"Invalid status: {o['status']}"
@@ -167,8 +190,15 @@ class TestGenerateOrders:
     def test_orders_have_required_fields(self):
         orders = self._generate()
         required = [
-            "id", "order_number", "product_id", "supplier_id",
-            "route_id", "quantity", "unit_price", "total_cost", "status",
+            "id",
+            "order_number",
+            "product_id",
+            "supplier_id",
+            "route_id",
+            "quantity",
+            "unit_price",
+            "total_cost",
+            "status",
         ]
         for o in orders:
             for field in required:
@@ -195,7 +225,15 @@ class TestProductCatalog:
         assert categories == {"electronics", "automotive", "pharma", "consumer_goods"}
 
     def test_products_have_required_fields(self):
-        required = ["sku", "name", "category", "unit_cost", "weight_kg", "is_critical", "description"]
+        required = [
+            "sku",
+            "name",
+            "category",
+            "unit_cost",
+            "weight_kg",
+            "is_critical",
+            "description",
+        ]
         for p in PRODUCT_CATALOG:
             for field in required:
                 assert field in p, f"Missing field '{field}' in product {p.get('sku', '?')}"

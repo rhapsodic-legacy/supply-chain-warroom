@@ -1,6 +1,5 @@
 """Shared fixtures for the Supply Chain War Room test suite."""
 
-import asyncio
 import uuid
 from datetime import datetime
 
@@ -192,19 +191,9 @@ def mock_anthropic(monkeypatch):
     mock = MockAsyncAnthropic()
 
     # Patch at the module level where each agent imports anthropic
-    monkeypatch.setattr(
-        "app.agents.orchestrator.anthropic.AsyncAnthropic", lambda **kw: mock
-    )
-    monkeypatch.setattr(
-        "app.agents.risk_monitor.anthropic.AsyncAnthropic", lambda **kw: mock
-    )
-    monkeypatch.setattr(
-        "app.agents.execution_agent.anthropic.AsyncAnthropic", lambda **kw: mock
-    )
-    monkeypatch.setattr(
-        "app.agents.strategy_agent.anthropic.AsyncAnthropic", lambda **kw: mock
-    )
-    monkeypatch.setattr(
-        "app.agents.simulation_agent.anthropic.AsyncAnthropic", lambda **kw: mock
-    )
+    monkeypatch.setattr("app.agents.orchestrator.anthropic.AsyncAnthropic", lambda **kw: mock)
+    monkeypatch.setattr("app.agents.risk_monitor.anthropic.AsyncAnthropic", lambda **kw: mock)
+    monkeypatch.setattr("app.agents.execution_agent.anthropic.AsyncAnthropic", lambda **kw: mock)
+    monkeypatch.setattr("app.agents.strategy_agent.anthropic.AsyncAnthropic", lambda **kw: mock)
+    monkeypatch.setattr("app.agents.simulation_agent.anthropic.AsyncAnthropic", lambda **kw: mock)
     return mock

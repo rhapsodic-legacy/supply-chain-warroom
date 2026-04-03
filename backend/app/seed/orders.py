@@ -49,9 +49,7 @@ def generate_orders(
     # Build lookup: supplier_id -> list of (product_id, unit_price)
     sp_map: dict[str, list[tuple[str, float]]] = {}
     for sp in supplier_products:
-        sp_map.setdefault(sp["supplier_id"], []).append(
-            (sp["product_id"], sp["unit_price"])
-        )
+        sp_map.setdefault(sp["supplier_id"], []).append((sp["product_id"], sp["unit_price"]))
 
     # Filter to active suppliers that have products assigned
     active_suppliers = [s for s in suppliers if s["is_active"] and s["id"] in sp_map]
@@ -71,8 +69,7 @@ def generate_orders(
 
         # Pick a route that originates from the supplier's region (best effort)
         matching_routes = [
-            r for r in ocean_routes
-            if _region_matches_port(supplier["region"], r["origin_port"])
+            r for r in ocean_routes if _region_matches_port(supplier["region"], r["origin_port"])
         ]
         route = rng.choice(matching_routes) if matching_routes else rng.choice(ocean_routes)
 
@@ -111,22 +108,24 @@ def generate_orders(
 
         order_number = f"PO-2025-{i + 1:04d}"
 
-        orders.append({
-            "id": str(uuid.UUID(int=rng.getrandbits(128))),
-            "order_number": order_number,
-            "product_id": product_id,
-            "supplier_id": supplier["id"],
-            "route_id": route["id"],
-            "quantity": quantity,
-            "unit_price": unit_price,
-            "total_cost": total_cost,
-            "status": status,
-            "ordered_at": ordered_at,
-            "expected_delivery": expected_delivery,
-            "actual_delivery": actual_delivery,
-            "delay_days": delay_days,
-            "delay_reason": delay_reason,
-        })
+        orders.append(
+            {
+                "id": str(uuid.UUID(int=rng.getrandbits(128))),
+                "order_number": order_number,
+                "product_id": product_id,
+                "supplier_id": supplier["id"],
+                "route_id": route["id"],
+                "quantity": quantity,
+                "unit_price": unit_price,
+                "total_cost": total_cost,
+                "status": status,
+                "ordered_at": ordered_at,
+                "expected_delivery": expected_delivery,
+                "actual_delivery": actual_delivery,
+                "delay_days": delay_days,
+                "delay_reason": delay_reason,
+            }
+        )
 
     return orders
 

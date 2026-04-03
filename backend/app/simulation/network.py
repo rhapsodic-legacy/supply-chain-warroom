@@ -12,7 +12,6 @@ from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
-import numpy as np
 
 if TYPE_CHECKING:
     from app.simulation.scenarios import Disruption
@@ -21,6 +20,7 @@ if TYPE_CHECKING:
 # ---------------------------------------------------------------------------
 # Graph primitives
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class Node:
@@ -53,6 +53,7 @@ class Edge:
 # ---------------------------------------------------------------------------
 # Network container
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class SupplyChainNetwork:
@@ -166,11 +167,13 @@ class SupplyChainNetwork:
                     continue
                 if edge.target_id in visited:
                     continue
-                queue.append((
-                    edge.target_id,
-                    path + [edge],
-                    visited | {edge.target_id},
-                ))
+                queue.append(
+                    (
+                        edge.target_id,
+                        path + [edge],
+                        visited | {edge.target_id},
+                    )
+                )
 
         return results
 
@@ -178,6 +181,7 @@ class SupplyChainNetwork:
 # ---------------------------------------------------------------------------
 # Factory: DB records -> SupplyChainNetwork
 # ---------------------------------------------------------------------------
+
 
 def build_network_from_db(
     suppliers: list,

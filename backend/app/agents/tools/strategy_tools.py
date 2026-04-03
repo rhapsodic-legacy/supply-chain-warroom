@@ -177,9 +177,7 @@ async def cost_benefit_analysis(
     net_benefit = delay_value + risk_value - cost_delta
     roi = (net_benefit / max(abs(cost_delta), 1)) * 100 if cost_delta != 0 else float("inf")
 
-    recommendation = (
-        "RECOMMENDED" if net_benefit > 0 else "NOT RECOMMENDED"
-    )
+    recommendation = "RECOMMENDED" if net_benefit > 0 else "NOT RECOMMENDED"
 
     analysis = {
         "current_cost_usd": round(current_cost, 2),

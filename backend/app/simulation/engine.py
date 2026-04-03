@@ -10,17 +10,17 @@ Achieved via NumPy vectorized sampling and batched day-level computation.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Sequence
 
 import numpy as np
 
-from app.simulation.network import Edge, Node, SupplyChainNetwork
+from app.simulation.network import SupplyChainNetwork
 from app.simulation.scenarios import Disruption, Scenario
 
 
 # ---------------------------------------------------------------------------
 # Result data structures
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class IterationResult:
@@ -81,6 +81,7 @@ class SimulationResult:
 # Internal helpers — log-normal parameterisation
 # ---------------------------------------------------------------------------
 
+
 def _lognormal_params(mean: float, std: float) -> tuple[float, float]:
     """Convert desired (mean, std) to log-normal (mu, sigma) parameters.
 
@@ -91,8 +92,8 @@ def _lognormal_params(mean: float, std: float) -> tuple[float, float]:
     if mean <= 0:
         return 0.0, 0.0
     std = max(std, 1e-6)
-    variance = std ** 2
-    sigma_sq = np.log1p(variance / (mean ** 2))
+    variance = std**2
+    sigma_sq = np.log1p(variance / (mean**2))
     mu = np.log(mean) - sigma_sq / 2
     sigma = np.sqrt(sigma_sq)
     return float(mu), float(sigma)
@@ -102,28 +103,31 @@ def _lognormal_params(mean: float, std: float) -> tuple[float, float]:
 # Path pre-computation
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class _PathInfo:
     """Pre-computed information about a supply path through the network."""
+
     edge_indices: list[int]  # indices into the edge arrays
     base_cost: float
     base_lead_time: float
 
 
-def _precompute_paths(network: SupplyChainNetwork) -> tuple[
-    list[str],          # edge_ids ordered
-    np.ndarray,         # base_lead_times  (E,)
-    np.ndarray,         # lead_time_stds   (E,)
-    np.ndarray,         # costs_per_unit   (E,)
-    np.ndarray,         # capacities       (E,)
-    np.ndarray,         # reliabilities    (E,)
-    list[_PathInfo],    # paths from suppliers to US_DEMAND
+def _precompute_paths(
+    network: SupplyChainNetwork,
+) -> tuple[
+    list[str],  # edge_ids ordered
+    np.ndarray,  # base_lead_times  (E,)
+    np.ndarray,  # lead_time_stds   (E,)
+    np.ndarray,  # costs_per_unit   (E,)
+    np.ndarray,  # capacities       (E,)
+    np.ndarray,  # reliabilities    (E,)
+    list[_PathInfo],  # paths from suppliers to US_DEMAND
 ]:
     """Flatten network edges into arrays and find all supplier->customer paths."""
 
     edge_list = list(network.edges.values())
     edge_ids = [e.id for e in edge_list]
-    n_edges = len(edge_list)
 
     base_lead_times = np.array([e.base_lead_time for e in edge_list], dtype=np.float64)
     lead_time_stds = np.array([e.lead_time_std for e in edge_list], dtype=np.float64)
@@ -153,6 +157,7 @@ def _precompute_paths(network: SupplyChainNetwork) -> tuple[
 # ---------------------------------------------------------------------------
 # Disruption matching helpers
 # ---------------------------------------------------------------------------
+
 
 def _resolve_disruption_ids(
     disruption: Disruption,
@@ -192,8 +197,7 @@ def _resolve_disruption_ids(
     match_region = params.get("match_region")
     if match_region and not matched:
         candidates = [
-            n for n in network.nodes.values()
-            if n.region == match_region and n.type == "supplier"
+            n for n in network.nodes.values() if n.region == match_region and n.type == "supplier"
         ]
         pick = params.get("pick")
         if pick == "highest_capacity" and candidates:
@@ -208,6 +212,7 @@ def _resolve_disruption_ids(
 # ---------------------------------------------------------------------------
 # Core simulation
 # ---------------------------------------------------------------------------
+
 
 def _simulate_baseline(
     paths: list[_PathInfo],
@@ -354,9 +359,7 @@ def run_simulation(
                             d_reliabilities[idx] = 0.0
 
     # --- Determine max disruption duration --------------------------------
-    max_disruption_days = max(
-        (d.duration_days for d in scenario.disruptions), default=0
-    )
+    max_disruption_days = max((d.duration_days for d in scenario.disruptions), default=0)
 
     # --- Pre-compute log-normal parameters for all edges ------------------
     mus = np.zeros(n_edges, dtype=np.float64)
@@ -381,9 +384,7 @@ def run_simulation(
     n_paths = len(paths)
 
     # Pre-extract path edge indices into a ragged structure for fast access
-    path_edge_indices: list[np.ndarray] = [
-        np.array(p.edge_indices, dtype=np.intp) for p in paths
-    ]
+    path_edge_indices: list[np.ndarray] = [np.array(p.edge_indices, dtype=np.intp) for p in paths]
 
     # Allocate result arrays
     iter_costs = np.empty(iterations, dtype=np.float64)
@@ -416,15 +417,17 @@ def run_simulation(
         fail_mask_d = reliability_rolls > d_reliabilities[np.newaxis, :]
         fail_mask_n = reliability_rolls > reliabilities[np.newaxis, :]
 
-        sampled_lt_disrupted = np.where(fail_mask_d, sampled_lt_disrupted * 2.0, sampled_lt_disrupted)
+        sampled_lt_disrupted = np.where(
+            fail_mask_d, sampled_lt_disrupted * 2.0, sampled_lt_disrupted
+        )
         sampled_lt_normal = np.where(fail_mask_n, sampled_lt_normal * 1.3, sampled_lt_normal)
 
         # Demand noise: Poisson-like variation around base demand
         base_demand = 100.0  # normalised daily demand units per path
         demand_normal = rng.poisson(lam=base_demand, size=bs).astype(np.float64)
-        demand_disrupted = rng.poisson(
-            lam=base_demand * demand_multiplier, size=bs
-        ).astype(np.float64)
+        demand_disrupted = rng.poisson(lam=base_demand * demand_multiplier, size=bs).astype(
+            np.float64
+        )
 
         # Evaluate each path for this block
         block_costs = np.zeros(bs, dtype=np.float64)

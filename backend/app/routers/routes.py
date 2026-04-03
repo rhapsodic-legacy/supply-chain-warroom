@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.models import ShippingRoute
-from app.schemas import ShippingRouteBrief, ShippingRouteResponse
+from app.schemas import ShippingRouteResponse
 
 router = APIRouter(prefix="/api/v1/routes", tags=["routes"])
 

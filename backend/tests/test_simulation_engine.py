@@ -65,20 +65,57 @@ class TestDistributionStats:
 def _build_simple_network() -> SupplyChainNetwork:
     """Create a 3-node network: supplier -> port -> customer."""
     nodes = {
-        "S1": Node(id="S1", type="supplier", name="Supplier A", region="East Asia",
-                    capacity_per_day=5000, lat=31.0, lon=121.0),
-        "P1": Node(id="P1", type="port", name="Shanghai", region="China",
-                    capacity_per_day=20000, lat=31.2, lon=121.5),
-        "C1": Node(id="C1", type="customer", name="US Demand", region="North America",
-                    capacity_per_day=1e9, lat=40.0, lon=-74.0),
+        "S1": Node(
+            id="S1",
+            type="supplier",
+            name="Supplier A",
+            region="East Asia",
+            capacity_per_day=5000,
+            lat=31.0,
+            lon=121.0,
+        ),
+        "P1": Node(
+            id="P1",
+            type="port",
+            name="Shanghai",
+            region="China",
+            capacity_per_day=20000,
+            lat=31.2,
+            lon=121.5,
+        ),
+        "C1": Node(
+            id="C1",
+            type="customer",
+            name="US Demand",
+            region="North America",
+            capacity_per_day=1e9,
+            lat=40.0,
+            lon=-74.0,
+        ),
     }
     edges = {
-        "E1": Edge(id="E1", source_id="S1", target_id="P1", transport_mode="truck",
-                    base_lead_time=2.0, lead_time_std=1.0, cost_per_unit=0.10,
-                    capacity_per_day=5000, reliability=0.90),
-        "E2": Edge(id="E2", source_id="P1", target_id="C1", transport_mode="ocean",
-                    base_lead_time=14.0, lead_time_std=3.0, cost_per_unit=0.20,
-                    capacity_per_day=10000, reliability=0.85),
+        "E1": Edge(
+            id="E1",
+            source_id="S1",
+            target_id="P1",
+            transport_mode="truck",
+            base_lead_time=2.0,
+            lead_time_std=1.0,
+            cost_per_unit=0.10,
+            capacity_per_day=5000,
+            reliability=0.90,
+        ),
+        "E2": Edge(
+            id="E2",
+            source_id="P1",
+            target_id="C1",
+            transport_mode="ocean",
+            base_lead_time=14.0,
+            lead_time_std=3.0,
+            cost_per_unit=0.20,
+            capacity_per_day=10000,
+            reliability=0.85,
+        ),
     }
     net = SupplyChainNetwork(nodes=nodes, edges=edges)
     net._rebuild_index()
@@ -106,24 +143,38 @@ class TestBuildNetworkFromDb:
 
         suppliers = [
             MockSupplier(
-                id="sup1", name="Test Supplier", region="East Asia",
-                country="China", city="Shanghai",
-                capacity_units=10000, base_lead_time_days=20,
-                lead_time_variance=3, cost_multiplier=1.0,
-                reliability_score=0.85, is_active=True,
+                id="sup1",
+                name="Test Supplier",
+                region="East Asia",
+                country="China",
+                city="Shanghai",
+                capacity_units=10000,
+                base_lead_time_days=20,
+                lead_time_variance=3,
+                cost_multiplier=1.0,
+                reliability_score=0.85,
+                is_active=True,
             ),
         ]
         routes = [
             MockRoute(
-                id="route1", name="Shanghai->LA",
-                origin_port="Shanghai", origin_country="China",
-                destination_port="Los Angeles", destination_country="United States",
-                transport_mode="ocean", base_transit_days=14,
-                transit_variance_days=3, cost_per_kg=0.18,
-                risk_score=0.25, capacity_tons=18000,
+                id="route1",
+                name="Shanghai->LA",
+                origin_port="Shanghai",
+                origin_country="China",
+                destination_port="Los Angeles",
+                destination_country="United States",
+                transport_mode="ocean",
+                base_transit_days=14,
+                transit_variance_days=3,
+                cost_per_kg=0.18,
+                risk_score=0.25,
+                capacity_tons=18000,
                 is_active=True,
-                origin_lat=31.23, origin_lon=121.47,
-                dest_lat=33.74, dest_lon=-118.26,
+                origin_lat=31.23,
+                origin_lon=121.47,
+                dest_lat=33.74,
+                dest_lon=-118.26,
             ),
         ]
 
@@ -154,8 +205,10 @@ class TestRunSimulation:
         """run_simulation returns a SimulationResult."""
         network = _build_simple_network()
         scenario = Scenario(
-            name="Test", description="test",
-            disruptions=[], time_horizon_days=30,
+            name="Test",
+            description="test",
+            disruptions=[],
+            time_horizon_days=30,
         )
         result = run_simulation(network, scenario, iterations=100, seed=42)
         assert isinstance(result, SimulationResult)
@@ -164,8 +217,10 @@ class TestRunSimulation:
         """Baseline cost should be > 0 for a connected network."""
         network = _build_simple_network()
         scenario = Scenario(
-            name="Test", description="test",
-            disruptions=[], time_horizon_days=30,
+            name="Test",
+            description="test",
+            disruptions=[],
+            time_horizon_days=30,
         )
         result = run_simulation(network, scenario, iterations=100, seed=42)
         assert result.baseline_cost > 0
@@ -174,8 +229,10 @@ class TestRunSimulation:
         """p50 <= p90 <= p99 in the cost distribution."""
         network = _build_simple_network()
         scenario = Scenario(
-            name="Test", description="test",
-            disruptions=[], time_horizon_days=30,
+            name="Test",
+            description="test",
+            disruptions=[],
+            time_horizon_days=30,
         )
         result = run_simulation(network, scenario, iterations=500, seed=42)
         cd = result.cost_distribution
@@ -188,18 +245,23 @@ class TestRunSimulation:
 
         # Baseline run
         baseline_scenario = Scenario(
-            name="Baseline", description="no disruptions",
-            disruptions=[], time_horizon_days=60,
+            name="Baseline",
+            description="no disruptions",
+            disruptions=[],
+            time_horizon_days=60,
         )
         baseline = run_simulation(network, baseline_scenario, iterations=500, seed=42)
 
         # Disrupted run: close the ocean route
         disrupted_scenario = Scenario(
-            name="Disrupted", description="route closure",
+            name="Disrupted",
+            description="route closure",
             disruptions=[
                 Disruption(
-                    type="route_closure", affected_ids=["E2"],
-                    severity=0.9, duration_days=14,
+                    type="route_closure",
+                    affected_ids=["E2"],
+                    severity=0.9,
+                    duration_days=14,
                 ),
             ],
             time_horizon_days=60,
@@ -214,8 +276,10 @@ class TestRunSimulation:
         """The scenario name is preserved in the result."""
         network = _build_simple_network()
         scenario = Scenario(
-            name="My Custom Scenario", description="test",
-            disruptions=[], time_horizon_days=30,
+            name="My Custom Scenario",
+            description="test",
+            disruptions=[],
+            time_horizon_days=30,
         )
         result = run_simulation(network, scenario, iterations=50, seed=42)
         assert result.scenario_name == "My Custom Scenario"
@@ -224,8 +288,10 @@ class TestRunSimulation:
         """The iterations count is correctly recorded."""
         network = _build_simple_network()
         scenario = Scenario(
-            name="Test", description="test",
-            disruptions=[], time_horizon_days=30,
+            name="Test",
+            description="test",
+            disruptions=[],
+            time_horizon_days=30,
         )
         result = run_simulation(network, scenario, iterations=200, seed=42)
         assert result.iterations == 200
@@ -294,10 +360,12 @@ class TestCreateScenarioFromParams:
 
     def test_preset_with_time_override(self):
         """The time_horizon_days override is applied to presets."""
-        scenario = create_scenario_from_params({
-            "preset": "demand_shock",
-            "time_horizon_days": 120,
-        })
+        scenario = create_scenario_from_params(
+            {
+                "preset": "demand_shock",
+                "time_horizon_days": 120,
+            }
+        )
         assert scenario.time_horizon_days == 120
 
     def test_unknown_preset_raises(self):
@@ -307,9 +375,11 @@ class TestCreateScenarioFromParams:
 
     def test_defaults_for_missing_fields(self):
         """Missing fields get sensible defaults."""
-        scenario = create_scenario_from_params({
-            "disruptions": [{"type": "demand_spike"}],
-        })
+        scenario = create_scenario_from_params(
+            {
+                "disruptions": [{"type": "demand_spike"}],
+            }
+        )
         assert scenario.name == "Custom Scenario"
         assert scenario.time_horizon_days == 90
         assert scenario.disruptions[0].severity == pytest.approx(0.5)

@@ -20,7 +20,5 @@ async def list_decisions(
 
 
 async def get_decision(db: AsyncSession, decision_id: str) -> AgentDecision | None:
-    result = await db.execute(
-        select(AgentDecision).where(AgentDecision.id == decision_id)
-    )
+    result = await db.execute(select(AgentDecision).where(AgentDecision.id == decision_id))
     return result.scalar_one_or_none()

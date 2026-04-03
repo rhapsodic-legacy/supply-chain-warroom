@@ -12,12 +12,8 @@ class Order(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     order_number: Mapped[str] = mapped_column(String(20), unique=True, nullable=False)
-    product_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("products.id"), nullable=False
-    )
-    supplier_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("suppliers.id"), nullable=False
-    )
+    product_id: Mapped[str] = mapped_column(String(36), ForeignKey("products.id"), nullable=False)
+    supplier_id: Mapped[str] = mapped_column(String(36), ForeignKey("suppliers.id"), nullable=False)
     route_id: Mapped[str | None] = mapped_column(
         String(36), ForeignKey("shipping_routes.id"), nullable=True
     )

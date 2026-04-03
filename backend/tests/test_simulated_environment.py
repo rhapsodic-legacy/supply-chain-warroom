@@ -12,15 +12,11 @@ from __future__ import annotations
 
 import json
 
-import pytest
 from sqlalchemy import func, select
 
 from app.models import AgentDecision, Order, OrderEvent, RiskEvent, Simulation
 
 from tests.mock_anthropic import (
-    MockAsyncAnthropic,
-    MockContentBlock,
-    MockResponse,
     execution_scenario,
     orchestrator_decision_log_scenario,
     orchestrator_execution_scenario,
@@ -52,19 +48,17 @@ async def _get_first_order(db) -> Order | None:
 
 async def _get_first_active_supplier_id(db) -> str | None:
     from app.models import Supplier
-    result = await db.execute(
-        select(Supplier.id).where(Supplier.is_active.is_(True)).limit(1)
-    )
+
+    result = await db.execute(select(Supplier.id).where(Supplier.is_active.is_(True)).limit(1))
     row = result.first()
     return row[0] if row else None
 
 
 async def _get_different_supplier_id(db, exclude_id: str) -> str | None:
     from app.models import Supplier
+
     result = await db.execute(
-        select(Supplier.id)
-        .where(Supplier.is_active.is_(True), Supplier.id != exclude_id)
-        .limit(1)
+        select(Supplier.id).where(Supplier.is_active.is_(True), Supplier.id != exclude_id).limit(1)
     )
     row = result.first()
     return row[0] if row else None
@@ -78,9 +72,7 @@ async def _get_different_supplier_id(db, exclude_id: str) -> str | None:
 class TestRiskAssessmentWorkflow:
     """The risk monitor queries the DB but makes no mutations."""
 
-    async def test_risk_monitor_queries_active_risks(
-        self, seeded_db, mock_anthropic
-    ):
+    async def test_risk_monitor_queries_active_risks(self, seeded_db, mock_anthropic):
         # Configure mock for the risk_monitor agent (inner agent, not orchestrator)
         mock_anthropic.messages.add_scenario(
             lambda msgs: True,
@@ -122,9 +114,7 @@ class TestRiskAssessmentWorkflow:
 class TestSimulationWorkflow:
     """The simulation agent runs Monte Carlo and persists results."""
 
-    async def test_simulation_creates_record(
-        self, seeded_db, mock_anthropic
-    ):
+    async def test_simulation_creates_record(self, seeded_db, mock_anthropic):
         # Configure mock for the simulation agent
         mock_anthropic.messages.add_scenario(
             lambda msgs: True,
@@ -135,13 +125,13 @@ class TestSimulationWorkflow:
 
         from app.agents.simulation_agent import run_simulation_agent
 
-        result = await run_simulation_agent(
-            seeded_db, "Simulate a Suez Canal closure for 3 weeks"
-        )
+        result = await run_simulation_agent(seeded_db, "Simulate a Suez Canal closure for 3 weeks")
 
         # Got a response
         assert "response" in result
-        assert "simulation" in result["response"].lower() or "complete" in result["response"].lower()
+        assert (
+            "simulation" in result["response"].lower() or "complete" in result["response"].lower()
+        )
 
         # A new Simulation record should exist
         sim_count_after = await _count_rows(seeded_db, Simulation)
@@ -180,16 +170,12 @@ class TestFullLifecycleWorkflow:
 
         from app.agents.risk_monitor import run_risk_monitor
 
-        result = await run_risk_monitor(
-            seeded_db, "What's our exposure to the Rotterdam strike?"
-        )
+        result = await run_risk_monitor(seeded_db, "What's our exposure to the Rotterdam strike?")
         assert len(result["response"]) > 0
         # No mutations
         assert await _count_rows(seeded_db, AgentDecision) == 0
 
-    async def test_turn2_strategy_creates_proposed_decision(
-        self, seeded_db, mock_anthropic
-    ):
+    async def test_turn2_strategy_creates_proposed_decision(self, seeded_db, mock_anthropic):
         """Turn 2: User asks for recommendations -- creates a proposed decision."""
         mock_anthropic.messages.add_scenario(
             lambda msgs: True,
@@ -200,9 +186,7 @@ class TestFullLifecycleWorkflow:
 
         from app.agents.strategy_agent import run_strategy_agent
 
-        result = await run_strategy_agent(
-            seeded_db, "What should we do about it?"
-        )
+        result = await run_strategy_agent(seeded_db, "What should we do about it?")
         assert len(result["response"]) > 0
 
         # An AgentDecision with status="proposed" should be created
@@ -211,29 +195,23 @@ class TestFullLifecycleWorkflow:
 
         # Verify the decision is proposed
         latest = await seeded_db.execute(
-            select(AgentDecision)
-            .order_by(AgentDecision.decided_at.desc())
-            .limit(1)
+            select(AgentDecision).order_by(AgentDecision.decided_at.desc()).limit(1)
         )
         decision = latest.scalar_one()
         assert decision.status == "proposed"
         assert decision.agent_type == "strategy"
         assert decision.decision_type == "mitigation_plan"
 
-    async def test_turn3_execution_reroutes_order(
-        self, seeded_db, mock_anthropic
-    ):
+    async def test_turn3_execution_reroutes_order(self, seeded_db, mock_anthropic):
         """Turn 3: User approves execution -- order is rerouted."""
         # Get a real order and a different supplier to reroute to
         order = await _get_first_order(seeded_db)
         assert order is not None, "No orders in seed data"
 
-        new_supplier_id = await _get_different_supplier_id(
-            seeded_db, order.supplier_id
-        )
+        new_supplier_id = await _get_different_supplier_id(seeded_db, order.supplier_id)
         assert new_supplier_id is not None, "Could not find alternative supplier"
 
-        original_supplier = order.supplier_id
+        original_supplier_id = order.supplier_id  # noqa: F841
 
         mock_anthropic.messages.add_scenario(
             lambda msgs: True,
@@ -245,9 +223,7 @@ class TestFullLifecycleWorkflow:
 
         from app.agents.execution_agent import run_execution_agent
 
-        result = await run_execution_agent(
-            seeded_db, "Execute the rerouting plan"
-        )
+        result = await run_execution_agent(seeded_db, "Execute the rerouting plan")
         assert len(result["response"]) > 0
 
         # The order should be rerouted
@@ -272,9 +248,7 @@ class TestFullLifecycleWorkflow:
         event_count_after = await _count_rows(seeded_db, OrderEvent)
         assert event_count_after >= event_count_before + 1
 
-    async def test_turn4_decision_log_queryable(
-        self, seeded_db, mock_anthropic
-    ):
+    async def test_turn4_decision_log_queryable(self, seeded_db, mock_anthropic):
         """Turn 4: Query the decision log -- previous decisions are visible.
 
         This test depends on decisions created in turn2 and turn3. We run
@@ -286,18 +260,18 @@ class TestFullLifecycleWorkflow:
             strategy_scenario(risk_event_id=None),
         )
         from app.agents.strategy_agent import run_strategy_agent
+
         await run_strategy_agent(seeded_db, "Plan something")
 
         # Create an execution decision
         order = await _get_first_order(seeded_db)
-        new_supplier_id = await _get_different_supplier_id(
-            seeded_db, order.supplier_id
-        )
+        new_supplier_id = await _get_different_supplier_id(seeded_db, order.supplier_id)
         mock_anthropic.messages.add_scenario(
             lambda msgs: True,
             execution_scenario(order.id, new_supplier_id),
         )
         from app.agents.execution_agent import run_execution_agent
+
         await run_execution_agent(seeded_db, "Execute it")
 
         # Now query the decision log directly
@@ -328,9 +302,7 @@ class TestFullLifecycleWorkflow:
 class TestExecutionGate:
     """The orchestrator should refuse execution without explicit approval."""
 
-    async def test_blocks_unauthorized_action(
-        self, seeded_db, mock_anthropic
-    ):
+    async def test_blocks_unauthorized_action(self, seeded_db, mock_anthropic):
         # Configure the orchestrator mock to NOT call execution
         mock_anthropic.messages.add_scenario(
             lambda msgs: True,
@@ -342,9 +314,7 @@ class TestExecutionGate:
 
         from app.agents.orchestrator import run_orchestrator
 
-        result = await run_orchestrator(
-            seeded_db, "Reroute all orders from Shanghai immediately"
-        )
+        result = await run_orchestrator(seeded_db, "Reroute all orders from Shanghai immediately")
 
         # Should get a text response (not route to execution)
         assert "response" in result
@@ -372,9 +342,7 @@ class TestExecutionGate:
 class TestConcurrentRiskEvents:
     """A newly created risk event should be visible to the agent."""
 
-    async def test_new_risk_visible_to_agent(
-        self, seeded_db, mock_anthropic
-    ):
+    async def test_new_risk_visible_to_agent(self, seeded_db, mock_anthropic):
         # Step 1: Create a new risk event directly in the DB
         new_risk = RiskEvent(
             event_type="logistics",
@@ -399,7 +367,7 @@ class TestConcurrentRiskEvents:
 
         from app.agents.risk_monitor import run_risk_monitor
 
-        result = await run_risk_monitor(seeded_db, "Assess the new threat")
+        await run_risk_monitor(seeded_db, "Assess the new threat")
 
         # Step 3: Verify the tool was called and hit the DB
         assert mock_anthropic.messages._call_count == 2
@@ -407,9 +375,7 @@ class TestConcurrentRiskEvents:
         # The real query_risk_events ran against the DB and should have
         # returned the new event among active risks.
         # Verify the event exists in the DB
-        check = await seeded_db.execute(
-            select(RiskEvent).where(RiskEvent.id == new_risk_id)
-        )
+        check = await seeded_db.execute(select(RiskEvent).where(RiskEvent.id == new_risk_id))
         event = check.scalar_one_or_none()
         assert event is not None
         assert event.is_active is True
@@ -424,9 +390,7 @@ class TestConcurrentRiskEvents:
 class TestOrchestratorRouting:
     """Test the orchestrator routes to the correct specialist agents."""
 
-    async def test_orchestrator_routes_to_risk_monitor(
-        self, seeded_db, mock_anthropic
-    ):
+    async def test_orchestrator_routes_to_risk_monitor(self, seeded_db, mock_anthropic):
         """Orchestrator routes risk questions to the risk_monitor tool."""
         # The orchestrator mock calls risk_monitor tool, which invokes
         # run_risk_monitor (which itself needs a mock).
@@ -446,18 +410,14 @@ class TestOrchestratorRouting:
 
         from app.agents.orchestrator import run_orchestrator
 
-        result = await run_orchestrator(
-            seeded_db, "What risks do we face right now?"
-        )
+        result = await run_orchestrator(seeded_db, "What risks do we face right now?")
 
         assert "response" in result
         assert len(result["response"]) > 0
         assert len(result["actions"]) > 0
         assert result["actions"][0]["agent"] == "risk_monitor"
 
-    async def test_orchestrator_routes_to_simulation(
-        self, seeded_db, mock_anthropic
-    ):
+    async def test_orchestrator_routes_to_simulation(self, seeded_db, mock_anthropic):
         """Orchestrator routes simulation questions to the simulation tool."""
         mock_anthropic.messages.add_scenario(
             lambda msgs: True,
@@ -470,9 +430,7 @@ class TestOrchestratorRouting:
 
         from app.agents.orchestrator import run_orchestrator
 
-        result = await run_orchestrator(
-            seeded_db, "Simulate a Suez Canal closure for 3 weeks"
-        )
+        result = await run_orchestrator(seeded_db, "Simulate a Suez Canal closure for 3 weeks")
 
         assert "response" in result
         assert len(result["actions"]) > 0
@@ -482,9 +440,7 @@ class TestOrchestratorRouting:
         sim_count = await _count_rows(seeded_db, Simulation)
         assert sim_count >= 1
 
-    async def test_orchestrator_routes_to_strategy(
-        self, seeded_db, mock_anthropic
-    ):
+    async def test_orchestrator_routes_to_strategy(self, seeded_db, mock_anthropic):
         """Orchestrator routes strategy questions to the strategy tool."""
         mock_anthropic.messages.add_scenario(
             lambda msgs: True,
@@ -497,9 +453,7 @@ class TestOrchestratorRouting:
 
         from app.agents.orchestrator import run_orchestrator
 
-        result = await run_orchestrator(
-            seeded_db, "What should we do about the supply disruption?"
-        )
+        result = await run_orchestrator(seeded_db, "What should we do about the supply disruption?")
 
         assert "response" in result
         assert len(result["actions"]) > 0
@@ -511,14 +465,10 @@ class TestOrchestratorRouting:
         )
         assert decisions.scalars().first() is not None
 
-    async def test_orchestrator_execution_with_approval(
-        self, seeded_db, mock_anthropic
-    ):
+    async def test_orchestrator_execution_with_approval(self, seeded_db, mock_anthropic):
         """Orchestrator routes to execution when user explicitly approves."""
         order = await _get_first_order(seeded_db)
-        new_supplier_id = await _get_different_supplier_id(
-            seeded_db, order.supplier_id
-        )
+        new_supplier_id = await _get_different_supplier_id(seeded_db, order.supplier_id)
 
         mock_anthropic.messages.add_scenario(
             lambda msgs: True,
@@ -539,9 +489,7 @@ class TestOrchestratorRouting:
         assert len(result["actions"]) > 0
         assert result["actions"][0]["agent"] == "execution"
 
-    async def test_orchestrator_queries_decision_log(
-        self, seeded_db, mock_anthropic
-    ):
+    async def test_orchestrator_queries_decision_log(self, seeded_db, mock_anthropic):
         """Orchestrator can query the decision log for audit trail."""
         # First create a decision to query
         mock_anthropic.messages.add_scenario(
@@ -549,6 +497,7 @@ class TestOrchestratorRouting:
             strategy_scenario(),
         )
         from app.agents.strategy_agent import run_strategy_agent
+
         await run_strategy_agent(seeded_db, "Create a plan")
 
         # Now test the orchestrator querying the log
@@ -559,9 +508,7 @@ class TestOrchestratorRouting:
 
         from app.agents.orchestrator import run_orchestrator
 
-        result = await run_orchestrator(
-            seeded_db, "Why did you create that mitigation plan?"
-        )
+        result = await run_orchestrator(seeded_db, "Why did you create that mitigation plan?")
 
         assert "response" in result
         assert len(result["actions"]) > 0
@@ -576,9 +523,7 @@ class TestOrchestratorRouting:
 class TestMockCallLog:
     """Verify that the mock records calls correctly for test assertions."""
 
-    async def test_call_log_records_all_parameters(
-        self, seeded_db, mock_anthropic
-    ):
+    async def test_call_log_records_all_parameters(self, seeded_db, mock_anthropic):
         mock_anthropic.messages.add_scenario(
             lambda msgs: True,
             risk_assessment_scenario(),

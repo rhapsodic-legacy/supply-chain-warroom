@@ -19,6 +19,7 @@ from typing import Any, Callable
 @dataclass
 class MockContentBlock:
     """Mirrors anthropic.types.ContentBlock (TextBlock or ToolUseBlock)."""
+
     type: str
     text: str | None = None
     id: str | None = None
@@ -35,6 +36,7 @@ class MockUsage:
 @dataclass
 class MockResponse:
     """Mirrors anthropic.types.Message."""
+
     content: list[MockContentBlock]
     stop_reason: str  # "end_turn" or "tool_use"
     model: str = "mock-model"
@@ -82,10 +84,12 @@ class MockAnthropicMessages:
         """Convenience: always-match scenario with a single text reply."""
         self.add_scenario(
             lambda _msgs: True,
-            [MockResponse(
-                content=[MockContentBlock(type="text", text=text)],
-                stop_reason="end_turn",
-            )],
+            [
+                MockResponse(
+                    content=[MockContentBlock(type="text", text=text)],
+                    stop_reason="end_turn",
+                )
+            ],
         )
 
     # -- core mock ------------------------------------------------------------
@@ -105,10 +109,12 @@ class MockAnthropicMessages:
 
         # Default: simple text response
         return MockResponse(
-            content=[MockContentBlock(
-                type="text",
-                text="I've analyzed the situation. No immediate concerns detected.",
-            )],
+            content=[
+                MockContentBlock(
+                    type="text",
+                    text="I've analyzed the situation. No immediate concerns detected.",
+                )
+            ],
             stop_reason="end_turn",
         )
 
@@ -160,23 +166,27 @@ def risk_assessment_scenario() -> list[MockResponse]:
     """
     return [
         MockResponse(
-            content=[_tool_use_block(
-                "query_risk_events",
-                {"active_only": True},
-                tool_id="toolu_risk_001",
-            )],
+            content=[
+                _tool_use_block(
+                    "query_risk_events",
+                    {"active_only": True},
+                    tool_id="toolu_risk_001",
+                )
+            ],
             stop_reason="tool_use",
         ),
         MockResponse(
-            content=[_text_block(
-                "Based on my analysis of the active risk events, I've identified "
-                "the following key threats:\n\n"
-                "1. **Geopolitical risk** in East Asia — affecting regional suppliers.\n"
-                "2. **Weather disruption** — potential port closures.\n"
-                "3. **Logistics bottleneck** — congestion on key shipping routes.\n\n"
-                "I recommend running a simulation to quantify the financial exposure "
-                "and developing contingency plans for the highest-severity events."
-            )],
+            content=[
+                _text_block(
+                    "Based on my analysis of the active risk events, I've identified "
+                    "the following key threats:\n\n"
+                    "1. **Geopolitical risk** in East Asia — affecting regional suppliers.\n"
+                    "2. **Weather disruption** — potential port closures.\n"
+                    "3. **Logistics bottleneck** — congestion on key shipping routes.\n\n"
+                    "I recommend running a simulation to quantify the financial exposure "
+                    "and developing contingency plans for the highest-severity events."
+                )
+            ],
             stop_reason="end_turn",
         ),
     ]
@@ -194,24 +204,28 @@ def simulation_scenario(
     """Two-step simulation: tool_use for run_monte_carlo, then analysis text."""
     return [
         MockResponse(
-            content=[_tool_use_block(
-                "run_monte_carlo",
-                {"scenario_name": scenario_name, "iterations": iterations},
-                tool_id="toolu_sim_001",
-            )],
+            content=[
+                _tool_use_block(
+                    "run_monte_carlo",
+                    {"scenario_name": scenario_name, "iterations": iterations},
+                    tool_id="toolu_sim_001",
+                )
+            ],
             stop_reason="tool_use",
         ),
         MockResponse(
-            content=[_text_block(
-                f"Simulation complete ({iterations} iterations, {scenario_name}).\n\n"
-                "**Key findings:**\n"
-                "- Cost increase: ~15-20% above baseline\n"
-                "- Delay increase: 5-8 days on affected routes\n"
-                "- Fill rate drops from 0.95 to approximately 0.82\n"
-                "- P95 cost-at-risk indicates a 5% chance of costs exceeding 2x baseline\n\n"
-                "This is a significant disruption scenario. I recommend the Strategy agent "
-                "develop contingency plans for affected routes."
-            )],
+            content=[
+                _text_block(
+                    f"Simulation complete ({iterations} iterations, {scenario_name}).\n\n"
+                    "**Key findings:**\n"
+                    "- Cost increase: ~15-20% above baseline\n"
+                    "- Delay increase: 5-8 days on affected routes\n"
+                    "- Fill rate drops from 0.95 to approximately 0.82\n"
+                    "- P95 cost-at-risk indicates a 5% chance of costs exceeding 2x baseline\n\n"
+                    "This is a significant disruption scenario. I recommend the Strategy agent "
+                    "develop contingency plans for affected routes."
+                )
+            ],
             stop_reason="end_turn",
         ),
     ]
@@ -228,30 +242,34 @@ def strategy_scenario(
     """Two-step strategy: tool_use for generate_mitigation_plan, then recommendation."""
     return [
         MockResponse(
-            content=[_tool_use_block(
-                "generate_mitigation_plan",
-                {
-                    "risk_event_id": risk_event_id,
-                    "strategy_description": "Diversify supplier base by adding secondary source in Southeast Asia and pre-positioning safety stock for critical components.",
-                    "actions_json": '["Onboard backup supplier in Vietnam", "Pre-order 2 weeks safety stock for critical SKUs", "Activate alternate shipping route via Singapore"]',
-                    "estimated_cost": 125000.0,
-                    "risk_reduction_pct": 45.0,
-                },
-                tool_id="toolu_strat_001",
-            )],
+            content=[
+                _tool_use_block(
+                    "generate_mitigation_plan",
+                    {
+                        "risk_event_id": risk_event_id,
+                        "strategy_description": "Diversify supplier base by adding secondary source in Southeast Asia and pre-positioning safety stock for critical components.",
+                        "actions_json": '["Onboard backup supplier in Vietnam", "Pre-order 2 weeks safety stock for critical SKUs", "Activate alternate shipping route via Singapore"]',
+                        "estimated_cost": 125000.0,
+                        "risk_reduction_pct": 45.0,
+                    },
+                    tool_id="toolu_strat_001",
+                )
+            ],
             stop_reason="tool_use",
         ),
         MockResponse(
-            content=[_text_block(
-                "I've developed a mitigation plan and saved it for your review.\n\n"
-                "**Recommended Strategy:**\n"
-                "1. Onboard backup supplier in Vietnam\n"
-                "2. Pre-order 2 weeks safety stock for critical SKUs\n"
-                "3. Activate alternate shipping route via Singapore\n\n"
-                "**Estimated cost:** $125,000\n"
-                "**Expected risk reduction:** 45%\n\n"
-                "Would you like me to execute this plan?"
-            )],
+            content=[
+                _text_block(
+                    "I've developed a mitigation plan and saved it for your review.\n\n"
+                    "**Recommended Strategy:**\n"
+                    "1. Onboard backup supplier in Vietnam\n"
+                    "2. Pre-order 2 weeks safety stock for critical SKUs\n"
+                    "3. Activate alternate shipping route via Singapore\n\n"
+                    "**Estimated cost:** $125,000\n"
+                    "**Expected risk reduction:** 45%\n\n"
+                    "Would you like me to execute this plan?"
+                )
+            ],
             stop_reason="end_turn",
         ),
     ]
@@ -269,25 +287,29 @@ def execution_scenario(
     """Two-step execution: tool_use for reroute_order, then confirmation."""
     return [
         MockResponse(
-            content=[_tool_use_block(
-                "reroute_order",
-                {
-                    "order_id": order_id,
-                    "new_supplier_id": new_supplier_id,
-                    "reason": "Rerouting due to supply chain disruption risk mitigation.",
-                },
-                tool_id="toolu_exec_001",
-            )],
+            content=[
+                _tool_use_block(
+                    "reroute_order",
+                    {
+                        "order_id": order_id,
+                        "new_supplier_id": new_supplier_id,
+                        "reason": "Rerouting due to supply chain disruption risk mitigation.",
+                    },
+                    tool_id="toolu_exec_001",
+                )
+            ],
             stop_reason="tool_use",
         ),
         MockResponse(
-            content=[_text_block(
-                f"Order {order_id} has been successfully rerouted to supplier "
-                f"{new_supplier_id}.\n\n"
-                "An audit record has been created. "
-                "The expected delivery timeline may shift by 1-3 days. "
-                "I'll monitor the rerouted order for any further issues."
-            )],
+            content=[
+                _text_block(
+                    f"Order {order_id} has been successfully rerouted to supplier "
+                    f"{new_supplier_id}.\n\n"
+                    "An audit record has been created. "
+                    "The expected delivery timeline may shift by 1-3 days. "
+                    "I'll monitor the rerouted order for any further issues."
+                )
+            ],
             stop_reason="end_turn",
         ),
     ]
@@ -302,21 +324,25 @@ def orchestrator_risk_scenario() -> list[MockResponse]:
     """Orchestrator routes to risk_monitor, then synthesises."""
     return [
         MockResponse(
-            content=[_tool_use_block(
-                "risk_monitor",
-                {"query": "Assess all active risk events and their severity."},
-                tool_id="toolu_orch_risk_001",
-            )],
+            content=[
+                _tool_use_block(
+                    "risk_monitor",
+                    {"query": "Assess all active risk events and their severity."},
+                    tool_id="toolu_orch_risk_001",
+                )
+            ],
             stop_reason="tool_use",
         ),
         MockResponse(
-            content=[_text_block(
-                "Here is the current risk assessment from our Risk Monitor:\n\n"
-                "We have identified multiple active risk events across our supply chain network. "
-                "The most critical risks involve geopolitical tensions and logistics disruptions "
-                "that could impact delivery timelines and costs.\n\n"
-                "I recommend we run a simulation to quantify the financial exposure."
-            )],
+            content=[
+                _text_block(
+                    "Here is the current risk assessment from our Risk Monitor:\n\n"
+                    "We have identified multiple active risk events across our supply chain network. "
+                    "The most critical risks involve geopolitical tensions and logistics disruptions "
+                    "that could impact delivery timelines and costs.\n\n"
+                    "I recommend we run a simulation to quantify the financial exposure."
+                )
+            ],
             stop_reason="end_turn",
         ),
     ]
@@ -326,20 +352,24 @@ def orchestrator_simulation_scenario() -> list[MockResponse]:
     """Orchestrator routes to simulation, then synthesises."""
     return [
         MockResponse(
-            content=[_tool_use_block(
-                "simulation",
-                {"query": "Simulate a Suez Canal closure for 3 weeks"},
-                tool_id="toolu_orch_sim_001",
-            )],
+            content=[
+                _tool_use_block(
+                    "simulation",
+                    {"query": "Simulate a Suez Canal closure for 3 weeks"},
+                    tool_id="toolu_orch_sim_001",
+                )
+            ],
             stop_reason="tool_use",
         ),
         MockResponse(
-            content=[_text_block(
-                "The simulation results are in. A 3-week Suez Canal closure would cause "
-                "significant disruption to our supply chain.\n\n"
-                "Key impacts include cost increases and delivery delays on affected routes. "
-                "I recommend the Strategy agent develop contingency plans."
-            )],
+            content=[
+                _text_block(
+                    "The simulation results are in. A 3-week Suez Canal closure would cause "
+                    "significant disruption to our supply chain.\n\n"
+                    "Key impacts include cost increases and delivery delays on affected routes. "
+                    "I recommend the Strategy agent develop contingency plans."
+                )
+            ],
             stop_reason="end_turn",
         ),
     ]
@@ -349,21 +379,25 @@ def orchestrator_strategy_scenario() -> list[MockResponse]:
     """Orchestrator routes to strategy, then synthesises."""
     return [
         MockResponse(
-            content=[_tool_use_block(
-                "strategy",
-                {"query": "Develop a mitigation plan for the current risk exposure."},
-                tool_id="toolu_orch_strat_001",
-            )],
+            content=[
+                _tool_use_block(
+                    "strategy",
+                    {"query": "Develop a mitigation plan for the current risk exposure."},
+                    tool_id="toolu_orch_strat_001",
+                )
+            ],
             stop_reason="tool_use",
         ),
         MockResponse(
-            content=[_text_block(
-                "The Strategy agent has developed a comprehensive mitigation plan.\n\n"
-                "The plan involves diversifying our supplier base and pre-positioning "
-                "safety stock. Estimated cost: $125,000 with an expected risk reduction "
-                "of 45%.\n\n"
-                "Would you like me to proceed with execution?"
-            )],
+            content=[
+                _text_block(
+                    "The Strategy agent has developed a comprehensive mitigation plan.\n\n"
+                    "The plan involves diversifying our supplier base and pre-positioning "
+                    "safety stock. Estimated cost: $125,000 with an expected risk reduction "
+                    "of 45%.\n\n"
+                    "Would you like me to proceed with execution?"
+                )
+            ],
             stop_reason="end_turn",
         ),
     ]
@@ -376,18 +410,24 @@ def orchestrator_execution_scenario(
     """Orchestrator routes to execution, then confirms."""
     return [
         MockResponse(
-            content=[_tool_use_block(
-                "execution",
-                {"query": f"Reroute order {order_id} to supplier {new_supplier_id}. User has approved."},
-                tool_id="toolu_orch_exec_001",
-            )],
+            content=[
+                _tool_use_block(
+                    "execution",
+                    {
+                        "query": f"Reroute order {order_id} to supplier {new_supplier_id}. User has approved."
+                    },
+                    tool_id="toolu_orch_exec_001",
+                )
+            ],
             stop_reason="tool_use",
         ),
         MockResponse(
-            content=[_text_block(
-                f"Done. Order {order_id} has been rerouted to supplier {new_supplier_id}. "
-                "An audit trail has been created. I'll continue monitoring the order."
-            )],
+            content=[
+                _text_block(
+                    f"Done. Order {order_id} has been rerouted to supplier {new_supplier_id}. "
+                    "An audit trail has been created. I'll continue monitoring the order."
+                )
+            ],
             stop_reason="end_turn",
         ),
     ]
@@ -397,14 +437,16 @@ def orchestrator_gate_scenario() -> list[MockResponse]:
     """Orchestrator refuses to route to execution without explicit approval."""
     return [
         MockResponse(
-            content=[_text_block(
-                "I understand you'd like to reroute all orders from Shanghai. "
-                "Before I can execute any changes, I need to:\n\n"
-                "1. Assess the current risk exposure for Shanghai-sourced orders\n"
-                "2. Identify suitable alternative suppliers\n"
-                "3. Get your explicit approval for a specific rerouting plan\n\n"
-                "Would you like me to start with a risk assessment?"
-            )],
+            content=[
+                _text_block(
+                    "I understand you'd like to reroute all orders from Shanghai. "
+                    "Before I can execute any changes, I need to:\n\n"
+                    "1. Assess the current risk exposure for Shanghai-sourced orders\n"
+                    "2. Identify suitable alternative suppliers\n"
+                    "3. Get your explicit approval for a specific rerouting plan\n\n"
+                    "Would you like me to start with a risk assessment?"
+                )
+            ],
             stop_reason="end_turn",
         ),
     ]
@@ -414,19 +456,23 @@ def orchestrator_decision_log_scenario() -> list[MockResponse]:
     """Orchestrator queries the decision log."""
     return [
         MockResponse(
-            content=[_tool_use_block(
-                "query_decision_log",
-                {"query": "recent decisions", "limit": 10},
-                tool_id="toolu_orch_log_001",
-            )],
+            content=[
+                _tool_use_block(
+                    "query_decision_log",
+                    {"query": "recent decisions", "limit": 10},
+                    tool_id="toolu_orch_log_001",
+                )
+            ],
             stop_reason="tool_use",
         ),
         MockResponse(
-            content=[_text_block(
-                "Here are the recent agent decisions from the audit trail. "
-                "The decisions include rerouting actions and mitigation plans "
-                "that were executed to address supply chain disruptions."
-            )],
+            content=[
+                _text_block(
+                    "Here are the recent agent decisions from the audit trail. "
+                    "The decisions include rerouting actions and mitigation plans "
+                    "that were executed to address supply chain disruptions."
+                )
+            ],
             stop_reason="end_turn",
         ),
     ]
@@ -446,41 +492,51 @@ def multi_agent_scenario() -> list[MockResponse]:
     return [
         # Turn 1: route to risk_monitor
         MockResponse(
-            content=[_tool_use_block(
-                "risk_monitor",
-                {"query": "Assess all active risk events."},
-                tool_id="toolu_multi_001",
-            )],
+            content=[
+                _tool_use_block(
+                    "risk_monitor",
+                    {"query": "Assess all active risk events."},
+                    tool_id="toolu_multi_001",
+                )
+            ],
             stop_reason="tool_use",
         ),
         # Turn 2: route to simulation
         MockResponse(
-            content=[_tool_use_block(
-                "simulation",
-                {"query": "Model the worst-case disruption scenario."},
-                tool_id="toolu_multi_002",
-            )],
+            content=[
+                _tool_use_block(
+                    "simulation",
+                    {"query": "Model the worst-case disruption scenario."},
+                    tool_id="toolu_multi_002",
+                )
+            ],
             stop_reason="tool_use",
         ),
         # Turn 3: route to strategy
         MockResponse(
-            content=[_tool_use_block(
-                "strategy",
-                {"query": "Recommend a mitigation plan based on the risk assessment and simulation."},
-                tool_id="toolu_multi_003",
-            )],
+            content=[
+                _tool_use_block(
+                    "strategy",
+                    {
+                        "query": "Recommend a mitigation plan based on the risk assessment and simulation."
+                    },
+                    tool_id="toolu_multi_003",
+                )
+            ],
             stop_reason="tool_use",
         ),
         # Turn 4: synthesise everything
         MockResponse(
-            content=[_text_block(
-                "I've completed a full analysis cycle:\n\n"
-                "1. **Risk Assessment** — Multiple active threats identified.\n"
-                "2. **Simulation** — Worst-case scenario modelled with Monte Carlo analysis.\n"
-                "3. **Strategy** — Mitigation plan developed and saved.\n\n"
-                "The recommended approach is to diversify suppliers and pre-position "
-                "safety stock. Shall I execute the plan?"
-            )],
+            content=[
+                _text_block(
+                    "I've completed a full analysis cycle:\n\n"
+                    "1. **Risk Assessment** — Multiple active threats identified.\n"
+                    "2. **Simulation** — Worst-case scenario modelled with Monte Carlo analysis.\n"
+                    "3. **Strategy** — Mitigation plan developed and saved.\n\n"
+                    "The recommended approach is to diversify suppliers and pre-position "
+                    "safety stock. Shall I execute the plan?"
+                )
+            ],
             stop_reason="end_turn",
         ),
     ]

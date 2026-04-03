@@ -1,7 +1,5 @@
 """Tests for all REST API endpoints against a seeded database."""
 
-import pytest
-
 
 # ---------------------------------------------------------------------------
 # Health check
@@ -27,9 +25,14 @@ class TestDashboard:
         data = resp.json()
         # Verify all DashboardOverview fields are present
         for field in [
-            "total_orders", "active_orders", "total_suppliers",
-            "active_suppliers", "active_risk_events", "critical_risk_events",
-            "avg_fill_rate", "total_revenue",
+            "total_orders",
+            "active_orders",
+            "total_suppliers",
+            "active_suppliers",
+            "active_risk_events",
+            "critical_risk_events",
+            "avg_fill_rate",
+            "total_revenue",
         ]:
             assert field in data, f"Missing field: {field}"
         assert data["total_orders"] > 0

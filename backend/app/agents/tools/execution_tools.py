@@ -68,7 +68,9 @@ async def reroute_order(
         changes["route"] = f"{old_route_id} -> {new_route_id}"
 
     if not changes:
-        return json.dumps({"error": "No changes specified. Provide new_supplier_id or new_route_id."})
+        return json.dumps(
+            {"error": "No changes specified. Provide new_supplier_id or new_route_id."}
+        )
 
     # Create order event
     event = OrderEvent(
@@ -76,9 +78,7 @@ async def reroute_order(
         order_id=order_id,
         event_type="reroute",
         old_value=json.dumps({"supplier_id": old_supplier_id, "route_id": old_route_id}),
-        new_value=json.dumps(
-            {"supplier_id": order.supplier_id, "route_id": order.route_id}
-        ),
+        new_value=json.dumps({"supplier_id": order.supplier_id, "route_id": order.route_id}),
         agent_id="execution_agent",
     )
     db.add(event)
@@ -150,9 +150,7 @@ async def trigger_safety_stock(
 
     # Determine lead time based on urgency
     lead_time_multiplier = {"critical": 0.5, "high": 0.7, "medium": 1.0, "low": 1.2}
-    adjusted_lead_time = int(
-        supplier.base_lead_time_days * lead_time_multiplier.get(urgency, 1.0)
-    )
+    adjusted_lead_time = int(supplier.base_lead_time_days * lead_time_multiplier.get(urgency, 1.0))
 
     # Generate order number
     order_number = f"EMG-{datetime.utcnow().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"

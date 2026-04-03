@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -60,9 +60,10 @@ async def seed_database(db_url: str | None = None) -> None:
     # Resolve database URL
     if db_url is None:
         from app.config import settings
+
         db_url = settings.database_url
 
-    console.print(f"\n[bold cyan]Supply Chain War Room — Database Seeder[/bold cyan]")
+    console.print("\n[bold cyan]Supply Chain War Room — Database Seeder[/bold cyan]")
     console.print(f"[dim]Database: {db_url}[/dim]\n")
 
     engine = create_async_engine(db_url, echo=False)
@@ -71,6 +72,7 @@ async def seed_database(db_url: str | None = None) -> None:
     # Create tables if they don't exist
     console.print("[yellow]Creating tables if needed...[/yellow]")
     from app.database import Base
+
     # Ensure all models are imported so metadata knows about them
     import app.models  # noqa: F401
 
@@ -93,13 +95,16 @@ async def seed_database(db_url: str | None = None) -> None:
 
     # Products (from catalog)
     import random as _random
+
     rng = _random.Random(42)
     products = []
     for p in PRODUCT_CATALOG:
-        products.append({
-            "id": str(uuid.UUID(int=rng.getrandbits(128))),
-            **p,
-        })
+        products.append(
+            {
+                "id": str(uuid.UUID(int=rng.getrandbits(128))),
+                **p,
+            }
+        )
 
     console.print(f"  Products:          [cyan]{len(products)}[/cyan]")
 

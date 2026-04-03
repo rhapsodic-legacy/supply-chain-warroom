@@ -84,22 +84,26 @@ def generate_demand(products: list[dict], seed: int = 42) -> list[dict]:
                     # Actuals have their own noise relative to forecast
                     actual_noise = 1.0 + rng.gauss(0, 0.06)
                     actual_qty = max(1, int(forecast_qty * actual_noise))
-                    variance_pct = round(
-                        ((actual_qty - forecast_qty) / forecast_qty) * 100, 2
-                    ) if forecast_qty else 0.0
+                    variance_pct = (
+                        round(((actual_qty - forecast_qty) / forecast_qty) * 100, 2)
+                        if forecast_qty
+                        else 0.0
+                    )
                 else:
                     actual_qty = None
                     variance_pct = None
 
-                signals.append({
-                    "id": str(uuid.UUID(int=rng.getrandbits(128))),
-                    "product_id": product["id"],
-                    "region": region,
-                    "signal_date": week_cursor,
-                    "forecast_qty": forecast_qty,
-                    "actual_qty": actual_qty,
-                    "variance_pct": variance_pct,
-                })
+                signals.append(
+                    {
+                        "id": str(uuid.UUID(int=rng.getrandbits(128))),
+                        "product_id": product["id"],
+                        "region": region,
+                        "signal_date": week_cursor,
+                        "forecast_qty": forecast_qty,
+                        "actual_qty": actual_qty,
+                        "variance_pct": variance_pct,
+                    }
+                )
 
                 week_cursor += timedelta(weeks=1)
                 week_idx += 1
