@@ -1,0 +1,43 @@
+from datetime import datetime
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.database import get_db
+from app.schemas import AgentDecisionBrief, AgentDecisionResponse, ChatRequest, ChatResponse
+from app.services import agent_service
+
+router = APIRouter(prefix="/api/v1/agents", tags=["agents"])
+
+
+@router.get("/decisions", response_model=list[AgentDecisionBrief])
+async def list_decisions(
+    agent_type: str | None = Query(None),
+    status: str | None = Query(None),
+    limit: int = Query(50, ge=1, le=200),
+    db: AsyncSession = Depends(get_db),
+):
+    return await agent_service.list_decisions(db, agent_type=agent_type, status=status, limit=limit)
+
+
+@router.get("/decisions/{decision_id}", response_model=AgentDecisionResponse)
+async def get_decision(decision_id: str, db: AsyncSession = Depends(get_db)):
+    decision = await agent_service.get_decision(db, decision_id)
+    if not decision:
+        raise HTTPException(status_code=404, detail="Agent decision not found")
+    return decision
+
+
+@router.post("/chat", response_model=ChatResponse)
+async def chat(request: ChatRequest, db: AsyncSession = Depends(get_db)):
+    try:
+        from app.agents.orchestrator import handle_chat
+
+        result = await handle_chat(request.message, db)
+        return result
+    except ImportError:
+        return ChatResponse(
+            response="Agent orchestrator is not yet configured. Please set up the agents module.",
+            agent_actions=[],
+            timestamp=datetime.utcnow(),
+        )
