@@ -66,7 +66,7 @@ Built with the Claude Agent SDK, this system demonstrates how agentic AI can con
 ### Option 1: Docker Compose (Recommended)
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/supply-chain-warroom.git
+git clone https://github.com/rhapsodic-legacy/supply-chain-warroom.git
 cd supply-chain-warroom
 cp .env.example .env
 # Edit .env and add your ANTHROPIC_API_KEY
@@ -166,6 +166,34 @@ Every agent action is logged to the `agent_decisions` table with:
 - Execution status and outcome
 
 This makes every decision fully traceable and queryable.
+
+---
+
+## Deployment
+
+### Frontend → Vercel
+
+1. Import the repo at [vercel.com/new](https://vercel.com/new)
+2. Set **Root Directory** to `frontend`
+3. Add environment variable: `VITE_API_URL` = your Railway backend URL
+4. Deploy
+
+### Backend → Railway
+
+1. Create a new project at [railway.app](https://railway.app)
+2. Connect the GitHub repo
+3. Set **Root Directory** to `backend`
+4. Add environment variables: `ANTHROPIC_API_KEY`, `DATABASE_URL` (Railway Postgres addon), `FRONTEND_URL`
+5. Deploy — the `railway.toml` handles the rest
+
+---
+
+## Testing
+
+```bash
+cd backend && source .venv/bin/activate
+python3 -m pytest tests/ -v    # 56 tests
+```
 
 ---
 
