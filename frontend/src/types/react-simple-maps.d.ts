@@ -45,6 +45,7 @@ declare module 'react-simple-maps' {
     strokeLinecap?: string;
     strokeDasharray?: string;
     className?: string;
+    style?: React.CSSProperties;
   }
 
   interface MarkerProps {

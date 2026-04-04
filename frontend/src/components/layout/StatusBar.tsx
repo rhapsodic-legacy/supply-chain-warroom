@@ -8,8 +8,8 @@ export function StatusBar() {
     { label: 'CRITICAL RISKS', value: data?.critical_risk_events ?? '--', severity: 'red' },
     { label: 'ORDERS', value: data?.active_orders ?? '--', severity: 'cyan' },
     { label: 'TOTAL ORDERS', value: data?.total_orders ?? '--', severity: 'cyan' },
-    { label: 'FILL RATE', value: data ? `${(data.avg_fill_rate * 100).toFixed(1)}%` : '--%', severity: 'green' },
-    { label: 'REVENUE', value: data ? `$${(data.total_revenue / 1000).toFixed(0)}K` : '--', severity: 'amber' },
+    { label: 'FILL RATE', value: data ? `${data.avg_fill_rate.toFixed(1)}%` : '--%', severity: 'green' },
+    { label: 'REVENUE', value: data ? `$${(data.total_revenue / 1_000_000).toFixed(1)}M` : '--', severity: 'amber' },
     { label: 'SUPPLIERS', value: data?.total_suppliers ?? '--', severity: 'green' },
     { label: 'ACTIVE SUPPLIERS', value: data?.active_suppliers ?? '--', severity: 'green' },
   ];

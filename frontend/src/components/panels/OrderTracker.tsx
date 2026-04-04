@@ -28,15 +28,15 @@ const STAGE_LABELS: Record<string, string> = {
 };
 
 const STAGE_COLORS: Record<string, string> = {
-  pending: 'var(--wr-text-muted)',
-  confirmed: 'var(--wr-cyan)',
+  pending: 'var(--wr-amber)',
+  confirmed: 'var(--wr-amber)',
   in_production: 'var(--wr-purple)',
   shipped: 'var(--wr-cyan)',
-  in_transit: 'var(--wr-amber)',
+  in_transit: 'var(--wr-cyan)',
   customs: 'var(--wr-amber)',
   delivered: 'var(--wr-green)',
   delayed: 'var(--wr-red)',
-  cancelled: 'var(--wr-red)',
+  cancelled: '#6e1a1a',
 };
 
 export function OrderTracker({ className }: { className?: string }) {
@@ -64,12 +64,20 @@ export function OrderTracker({ className }: { className?: string }) {
     <Card className={className} title="Order Pipeline">
       {/* Summary row */}
       <div className="flex items-center gap-4 mb-4">
-        <div className="flex items-center gap-2">
-          <span className="text-xs" style={{ color: 'var(--wr-text-muted)' }}>Total</span>
-          <span className="font-mono-numbers text-lg font-bold" style={{ color: 'var(--wr-cyan)' }}>
+        <div className="flex items-baseline gap-2">
+          <span className="font-mono-numbers text-2xl font-bold" style={{ color: 'var(--wr-cyan)' }}>
             {total}
           </span>
+          <span className="text-xs uppercase tracking-wider" style={{ color: 'var(--wr-text-muted)' }}>Total Orders</span>
         </div>
+        {delayedCount > 0 && (
+          <div className="flex items-center gap-1.5 ml-auto">
+            <span className="inline-block w-2 h-2 rounded-full pulse-dot" style={{ background: 'var(--wr-red)' }} />
+            <span className="font-mono-numbers text-xs font-semibold" style={{ color: 'var(--wr-red)' }}>
+              {delayedCount} delayed
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Pipeline visualization */}
@@ -96,11 +104,12 @@ export function OrderTracker({ className }: { className?: string }) {
                   style={{ background: 'var(--wr-bg-primary)' }}
                 >
                   <div
-                    className="h-full rounded transition-all duration-700 ease-out flex items-center justify-end pr-2"
+                    className="h-full rounded transition-all duration-700 ease-out"
                     style={{
-                      width: `${Math.max(pct, 2)}%`,
-                      background: `${STAGE_COLORS[stage]}20`,
+                      width: `${Math.max(pct, count > 0 ? 4 : 1)}%`,
+                      background: `linear-gradient(90deg, ${STAGE_COLORS[stage]}15, ${STAGE_COLORS[stage]}30)`,
                       borderRight: count > 0 ? `2px solid ${STAGE_COLORS[stage]}` : 'none',
+                      boxShadow: count > 0 ? `inset 0 0 8px ${STAGE_COLORS[stage]}10` : 'none',
                     }}
                   />
                 </div>

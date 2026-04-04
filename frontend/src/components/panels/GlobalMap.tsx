@@ -76,12 +76,12 @@ export function GlobalMap({ className }: { className?: string }) {
                 <Geography
                   key={geo.rsmKey}
                   geography={geo}
-                  fill="#1c2333"
-                  stroke="#1e2a3a"
-                  strokeWidth={0.5}
+                  fill="#0d1117"
+                  stroke="#1a2332"
+                  strokeWidth={0.4}
                   style={{
                     default: { outline: 'none' },
-                    hover: { outline: 'none', fill: '#232d3f' },
+                    hover: { outline: 'none', fill: '#161d27' },
                     pressed: { outline: 'none' },
                   }}
                 />
@@ -98,9 +98,10 @@ export function GlobalMap({ className }: { className?: string }) {
                 from={from}
                 to={to}
                 stroke={riskColor(route)}
-                strokeWidth={!route.is_active ? 2 : 1.2}
+                strokeWidth={route.is_active ? 1.6 : 1}
                 strokeLinecap="round"
                 strokeDasharray={!route.is_active ? '4 3' : undefined}
+                style={{ opacity: 0.4 + route.risk_score * 0.6 }}
               />
             );
           })}
@@ -140,6 +141,30 @@ export function GlobalMap({ className }: { className?: string }) {
           })}
         </ComposableMap>
 
+        {/* Risk level legend */}
+        <div
+          className="absolute bottom-3 left-3 z-10 flex items-center gap-3 px-2.5 py-1.5 rounded text-[10px]"
+          style={{
+            background: 'rgba(10, 14, 20, 0.85)',
+            border: '1px solid var(--wr-border)',
+            backdropFilter: 'blur(4px)',
+          }}
+        >
+          <span className="uppercase tracking-wider font-semibold" style={{ color: 'var(--wr-text-muted)' }}>Risk</span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block w-3 h-0.5 rounded" style={{ background: 'var(--wr-green)' }} />
+            <span style={{ color: 'var(--wr-green)' }}>Low</span>
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block w-3 h-0.5 rounded" style={{ background: 'var(--wr-amber)' }} />
+            <span style={{ color: 'var(--wr-amber)' }}>Med</span>
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block w-3 h-0.5 rounded" style={{ background: 'var(--wr-red)' }} />
+            <span style={{ color: 'var(--wr-red)' }}>High</span>
+          </span>
+        </div>
+
         {tooltip && (
           <div
             className="absolute z-10 pointer-events-none px-3 py-2 rounded-md text-xs"
@@ -150,6 +175,8 @@ export function GlobalMap({ className }: { className?: string }) {
               border: '1px solid var(--wr-border-active)',
               color: 'var(--wr-text-primary)',
               maxWidth: 240,
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5), 0 0 1px rgba(88, 166, 255, 0.2)',
+              backdropFilter: 'blur(8px)',
             }}
           >
             <p className="font-semibold" style={{ color: riskColor(tooltip.route) }}>

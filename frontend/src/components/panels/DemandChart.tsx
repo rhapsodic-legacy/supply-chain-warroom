@@ -78,29 +78,32 @@ export function DemandChart({ className }: { className?: string }) {
         <AreaChart data={chartData} margin={{ top: 5, right: 5, left: -10, bottom: 0 }}>
           <defs>
             <linearGradient id="gradForecast" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#58a6ff" stopOpacity={0.3} />
-              <stop offset="95%" stopColor="#58a6ff" stopOpacity={0} />
+              <stop offset="0%" stopColor="#58a6ff" stopOpacity={0.4} />
+              <stop offset="60%" stopColor="#58a6ff" stopOpacity={0.1} />
+              <stop offset="100%" stopColor="#58a6ff" stopOpacity={0} />
             </linearGradient>
             <linearGradient id="gradActual" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#3fb950" stopOpacity={0.3} />
-              <stop offset="95%" stopColor="#3fb950" stopOpacity={0} />
+              <stop offset="0%" stopColor="#3fb950" stopOpacity={0.35} />
+              <stop offset="60%" stopColor="#3fb950" stopOpacity={0.08} />
+              <stop offset="100%" stopColor="#3fb950" stopOpacity={0} />
             </linearGradient>
           </defs>
 
           <CartesianGrid
             strokeDasharray="3 3"
-            stroke="var(--wr-border)"
+            stroke="#1a2332"
+            strokeOpacity={0.6}
             vertical={false}
           />
 
           <XAxis
             dataKey="label"
-            tick={{ fontSize: 10, fill: '#484f58' }}
-            axisLine={{ stroke: 'var(--wr-border)' }}
+            tick={{ fontSize: 10, fill: 'var(--wr-text-muted)', fontFamily: 'var(--wr-font-mono)' }}
+            axisLine={{ stroke: '#1a2332' }}
             tickLine={false}
           />
           <YAxis
-            tick={{ fontSize: 10, fill: '#484f58' }}
+            tick={{ fontSize: 10, fill: 'var(--wr-text-muted)', fontFamily: 'var(--wr-font-mono)' }}
             axisLine={false}
             tickLine={false}
           />
@@ -112,12 +115,15 @@ export function DemandChart({ className }: { className?: string }) {
               borderRadius: 'var(--wr-radius)',
               fontSize: 12,
               color: 'var(--wr-text-primary)',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',
+              fontFamily: 'var(--wr-font-mono)',
             }}
             labelStyle={{ color: 'var(--wr-text-secondary)', marginBottom: 4 }}
             formatter={(value, name) => {
               const label = name === 'forecast' ? 'Forecast' : name === 'actual' ? 'Actual' : String(name);
               return [Number(value).toLocaleString(), label];
             }}
+            cursor={{ stroke: 'var(--wr-border-active)', strokeWidth: 1, strokeDasharray: '4 4' }}
           />
 
           {/* Highlight variance > 10% zones */}

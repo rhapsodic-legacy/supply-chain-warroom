@@ -75,11 +75,22 @@ function ResultsComparison({ baseline, mitigated }: { baseline: ParsedMetrics; m
             <div
               key={m.key}
               className="rounded-lg p-3"
-              style={{ background: 'var(--wr-bg-primary)', border: '1px solid var(--wr-border)' }}
+              style={{
+                background: 'var(--wr-bg-primary)',
+                border: `1px solid ${worse ? 'rgba(248, 81, 73, 0.2)' : 'rgba(63, 185, 80, 0.2)'}`,
+              }}
             >
-              <span className="text-[10px] uppercase tracking-wider block mb-1" style={{ color: 'var(--wr-text-muted)' }}>
-                {m.label}
-              </span>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--wr-text-muted)' }}>
+                  {m.label}
+                </span>
+                <span
+                  className="text-[10px] font-mono-numbers font-semibold"
+                  style={{ color: worse ? 'var(--wr-red)' : 'var(--wr-green)' }}
+                >
+                  {worse ? '\u25B2' : '\u25BC'}
+                </span>
+              </div>
               <div className="flex items-end gap-3">
                 <div>
                   <span className="text-[10px] block" style={{ color: 'var(--wr-text-muted)' }}>Base</span>
@@ -104,14 +115,14 @@ function ResultsComparison({ baseline, mitigated }: { baseline: ParsedMetrics; m
 
       <ResponsiveContainer width="100%" height={200}>
         <BarChart data={chartData} margin={{ top: 5, right: 5, left: -10, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--wr-border)" vertical={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="#1a2332" strokeOpacity={0.6} vertical={false} />
           <XAxis
             dataKey="metric"
-            tick={{ fontSize: 10, fill: '#484f58' }}
-            axisLine={{ stroke: 'var(--wr-border)' }}
+            tick={{ fontSize: 10, fill: 'var(--wr-text-muted)', fontFamily: 'var(--wr-font-mono)' }}
+            axisLine={{ stroke: '#1a2332' }}
             tickLine={false}
           />
-          <YAxis tick={{ fontSize: 10, fill: '#484f58' }} axisLine={false} tickLine={false} />
+          <YAxis tick={{ fontSize: 10, fill: 'var(--wr-text-muted)', fontFamily: 'var(--wr-font-mono)' }} axisLine={false} tickLine={false} />
           <Tooltip
             contentStyle={{
               background: 'var(--wr-bg-elevated)',
@@ -119,11 +130,13 @@ function ResultsComparison({ baseline, mitigated }: { baseline: ParsedMetrics; m
               borderRadius: 'var(--wr-radius)',
               fontSize: 12,
               color: 'var(--wr-text-primary)',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',
+              fontFamily: 'var(--wr-font-mono)',
             }}
           />
           <Legend wrapperStyle={{ fontSize: 10, color: 'var(--wr-text-muted)' }} />
-          <Bar dataKey="Baseline" fill="#58a6ff" radius={[3, 3, 0, 0]} />
-          <Bar dataKey="Mitigated" fill="#f85149" radius={[3, 3, 0, 0]} />
+          <Bar dataKey="Baseline" fill="#58a6ff" radius={[3, 3, 0, 0]} opacity={0.85} />
+          <Bar dataKey="Mitigated" fill="#3fb950" radius={[3, 3, 0, 0]} opacity={0.85} />
         </BarChart>
       </ResponsiveContainer>
     </div>
@@ -162,15 +175,22 @@ export function SimPanel({ className }: { className?: string }) {
             Scenario
           </label>
           <select
-            className="w-full px-3 py-2 rounded-md text-sm"
+            className="w-full px-3 py-2 rounded-md text-sm font-mono-numbers cursor-pointer transition-all duration-150"
             style={{
               background: 'var(--wr-bg-primary)',
               border: '1px solid var(--wr-border)',
               color: 'var(--wr-text-primary)',
               outline: 'none',
+              appearance: 'none',
+              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23484f58' d='M2 4l4 4 4-4'/%3E%3C/svg%3E")`,
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'right 10px center',
+              paddingRight: '30px',
             }}
             value={selectedScenario}
             onChange={(e) => setSelectedScenario(e.target.value)}
+            onFocus={(e) => { (e.target as HTMLElement).style.borderColor = 'var(--wr-cyan)'; }}
+            onBlur={(e) => { (e.target as HTMLElement).style.borderColor = 'var(--wr-border)'; }}
           >
             {PRESET_SCENARIOS.map((s) => (
               <option key={s.id} value={s.id}>
@@ -180,12 +200,15 @@ export function SimPanel({ className }: { className?: string }) {
           </select>
         </div>
         <button
-          className="px-4 py-2 rounded-md text-sm font-semibold transition-all duration-200 flex items-center gap-2"
+          className="px-5 py-2 rounded-md text-sm font-semibold transition-all duration-200 flex items-center gap-2 flex-shrink-0"
           style={{
-            background: runMutation.isPending ? 'var(--wr-border)' : 'var(--wr-cyan-dim)',
+            background: runMutation.isPending
+              ? 'var(--wr-border)'
+              : 'linear-gradient(135deg, rgba(88, 166, 255, 0.2), rgba(88, 166, 255, 0.1))',
             color: runMutation.isPending ? 'var(--wr-text-muted)' : 'var(--wr-cyan)',
-            border: `1px solid ${runMutation.isPending ? 'var(--wr-border)' : 'rgba(88, 166, 255, 0.3)'}`,
+            border: `1px solid ${runMutation.isPending ? 'var(--wr-border)' : 'rgba(88, 166, 255, 0.4)'}`,
             cursor: runMutation.isPending ? 'not-allowed' : 'pointer',
+            boxShadow: runMutation.isPending ? 'none' : '0 0 12px rgba(88, 166, 255, 0.15)',
           }}
           onClick={handleRunSimulation}
           disabled={runMutation.isPending}

@@ -99,7 +99,7 @@ export function SupplierGrid({ className }: { className?: string }) {
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[450px] overflow-y-auto pr-1">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 flex-1 overflow-y-auto pr-1" style={{ minHeight: 0 }}>
         {sorted.map((supplier) => (
           <div
             key={supplier.id}
@@ -114,6 +114,15 @@ export function SupplierGrid({ className }: { className?: string }) {
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2 min-w-0">
+                <span
+                  className={`inline-block w-2 h-2 rounded-full flex-shrink-0 ${!supplier.is_active ? 'pulse-dot' : ''}`}
+                  style={{
+                    background: supplier.is_active ? 'var(--wr-green)' : 'var(--wr-red)',
+                    boxShadow: supplier.is_active
+                      ? '0 0 6px rgba(63, 185, 80, 0.5)'
+                      : '0 0 6px rgba(248, 81, 73, 0.5)',
+                  }}
+                />
                 <span className="text-sm flex-shrink-0">
                   {countryFlags[supplier.country] ?? '\uD83C\uDFF3\uFE0F'}
                 </span>
@@ -146,7 +155,11 @@ export function SupplierGrid({ className }: { className?: string }) {
                   className="h-full rounded-full transition-all duration-500"
                   style={{
                     width: `${supplier.reliability_score * 100}%`,
-                    background: reliabilityColor(supplier.reliability_score),
+                    background: supplier.reliability_score >= 0.85
+                      ? 'linear-gradient(90deg, var(--wr-amber) 0%, var(--wr-green) 100%)'
+                      : supplier.reliability_score >= 0.7
+                        ? 'linear-gradient(90deg, var(--wr-red) 0%, var(--wr-amber) 100%)'
+                        : 'linear-gradient(90deg, #6e1a1a 0%, var(--wr-red) 100%)',
                   }}
                 />
               </div>

@@ -53,7 +53,7 @@ export function AgentLog({ className }: { className?: string }) {
 
   return (
     <Card className={className} title="Agent Decisions" badge={<Badge severity="info">{decisions.length}</Badge>}>
-      <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
+      <div className="space-y-2 flex-1 overflow-y-auto pr-1" style={{ minHeight: 0 }}>
         {sorted.map((decision) => {
           const isExpanded = expandedId === decision.id;
           const agentColor = AGENT_COLORS[decision.agent_type] ?? '#58a6ff';

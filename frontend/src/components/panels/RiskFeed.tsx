@@ -42,7 +42,7 @@ export function RiskFeed({ className }: { className?: string }) {
 
   return (
     <Card className={className} title="Risk Feed" badge={<Badge severity="critical" dot>{events.length} Active</Badge>}>
-      <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
+      <div className="space-y-2 flex-1 overflow-y-auto pr-1" style={{ minHeight: 0 }}>
         {sorted.map((event) => {
           const isExpanded = expandedId === event.id;
           const isCritical = event.severity === 'critical';

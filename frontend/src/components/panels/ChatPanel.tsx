@@ -89,7 +89,15 @@ export function ChatPanel({ className }: { className?: string }) {
   return (
     <Card className={`flex flex-col ${className ?? ''}`} title="Command Chat" noPadding>
       {/* Messages area */}
-      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-2 min-h-[200px] max-h-[400px]">
+      <div className="relative flex-1 min-h-[200px]" style={{ minHeight: 0 }}>
+        {/* Scroll fade gradient */}
+        <div
+          className="absolute top-0 left-0 right-0 h-6 z-10 pointer-events-none"
+          style={{
+            background: 'linear-gradient(to bottom, var(--wr-bg-surface), transparent)',
+          }}
+        />
+      <div className="overflow-y-auto px-4 pt-4 pb-2 h-full">
         {messages.length === 0 && !isLoading && (
           <div className="flex flex-col items-center justify-center h-full gap-3 py-8">
             <span className="text-2xl" style={{ color: 'var(--wr-text-muted)' }}>
@@ -148,11 +156,15 @@ export function ChatPanel({ className }: { className?: string }) {
 
         <div ref={messagesEndRef} />
       </div>
+      </div>
 
       {/* Input area */}
       <div
         className="px-4 py-3 flex items-center gap-2"
-        style={{ borderTop: '1px solid var(--wr-border)' }}
+        style={{
+          borderTop: '1px solid var(--wr-border)',
+          background: 'var(--wr-bg-surface)',
+        }}
       >
         <input
           ref={inputRef}
@@ -176,17 +188,21 @@ export function ChatPanel({ className }: { className?: string }) {
           disabled={isLoading}
         />
         <button
-          className="px-4 py-2 rounded-md text-sm font-semibold transition-all duration-150 flex-shrink-0"
+          className="px-4 py-2 rounded-md text-sm font-semibold transition-all duration-150 flex-shrink-0 flex items-center gap-1.5"
           style={{
-            background: input.trim() && !isLoading ? 'var(--wr-cyan-dim)' : 'var(--wr-bg-primary)',
+            background: input.trim() && !isLoading
+              ? 'linear-gradient(135deg, rgba(88, 166, 255, 0.2), rgba(88, 166, 255, 0.1))'
+              : 'var(--wr-bg-primary)',
             color: input.trim() && !isLoading ? 'var(--wr-cyan)' : 'var(--wr-text-muted)',
-            border: `1px solid ${input.trim() && !isLoading ? 'rgba(88, 166, 255, 0.3)' : 'var(--wr-border)'}`,
+            border: `1px solid ${input.trim() && !isLoading ? 'rgba(88, 166, 255, 0.4)' : 'var(--wr-border)'}`,
             cursor: input.trim() && !isLoading ? 'pointer' : 'default',
+            boxShadow: input.trim() && !isLoading ? '0 0 8px rgba(88, 166, 255, 0.1)' : 'none',
           }}
           onClick={handleSend}
           disabled={!input.trim() || isLoading}
         >
           Send
+          <span className="text-[9px] opacity-50">&crarr;</span>
         </button>
       </div>
     </Card>
