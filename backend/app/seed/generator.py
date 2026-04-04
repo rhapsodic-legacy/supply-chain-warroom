@@ -19,6 +19,7 @@ from app.seed.routes import generate_routes
 from app.seed.demand import generate_demand
 from app.seed.orders import generate_orders
 from app.seed.risk_events import generate_risk_events
+from app.seed.agent_decisions import generate_agent_decisions
 
 
 # Table names in deletion order (respects foreign keys)
@@ -134,6 +135,10 @@ async def seed_database(db_url: str | None = None) -> None:
     console.print(f"  Risk events:       [cyan]{len(risk_events)}[/cyan] ({active_count} active)")
     console.print(f"  Risk impacts:      [cyan]{len(risk_impacts)}[/cyan]")
 
+    # Agent decisions
+    agent_decisions = generate_agent_decisions(risk_events, orders, suppliers, seed=42)
+    console.print(f"  Agent decisions:   [cyan]{len(agent_decisions)}[/cyan]")
+
     # -----------------------------------------------------------------------
     # Insert data
     # -----------------------------------------------------------------------
@@ -148,6 +153,7 @@ async def seed_database(db_url: str | None = None) -> None:
     _add_timestamps(orders, ["created_at", "updated_at"])
     _add_timestamps(risk_events, ["created_at"])
     _add_timestamps(risk_impacts, ["created_at"])
+    _add_timestamps(agent_decisions, ["created_at"])
 
     async with session_factory() as session:
         await _bulk_insert(session, "products", products, console)
@@ -158,6 +164,7 @@ async def seed_database(db_url: str | None = None) -> None:
         await _bulk_insert(session, "orders", orders, console)
         await _bulk_insert(session, "risk_events", risk_events, console)
         await _bulk_insert(session, "risk_event_impacts", risk_impacts, console)
+        await _bulk_insert(session, "agent_decisions", agent_decisions, console)
         await session.commit()
 
     # -----------------------------------------------------------------------
@@ -174,6 +181,7 @@ async def seed_database(db_url: str | None = None) -> None:
     summary.add_row("Orders", str(len(orders)))
     summary.add_row("Risk Events", str(len(risk_events)))
     summary.add_row("Risk Event Impacts", str(len(risk_impacts)))
+    summary.add_row("Agent Decisions", str(len(agent_decisions)))
 
     console.print()
     console.print(summary)

@@ -163,6 +163,8 @@ class TestFullLifecycleWorkflow:
 
     async def test_turn1_risk_assessment(self, seeded_db, mock_anthropic):
         """Turn 1: User asks about risk exposure."""
+        decisions_before = await _count_rows(seeded_db, AgentDecision)
+
         mock_anthropic.messages.add_scenario(
             lambda msgs: True,
             risk_assessment_scenario(),
@@ -172,8 +174,8 @@ class TestFullLifecycleWorkflow:
 
         result = await run_risk_monitor(seeded_db, "What's our exposure to the Rotterdam strike?")
         assert len(result["response"]) > 0
-        # No mutations
-        assert await _count_rows(seeded_db, AgentDecision) == 0
+        # No new mutations (read-only flow)
+        assert await _count_rows(seeded_db, AgentDecision) == decisions_before
 
     async def test_turn2_strategy_creates_proposed_decision(self, seeded_db, mock_anthropic):
         """Turn 2: User asks for recommendations -- creates a proposed decision."""

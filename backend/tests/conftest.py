@@ -101,6 +101,7 @@ async def _seed_once():
     from app.seed.orders import generate_orders
     from app.seed.risk_events import generate_risk_events
     from app.seed.routes import generate_routes
+    from app.seed.agent_decisions import generate_agent_decisions
     from app.seed.suppliers import generate_supplier_products, generate_suppliers
 
     rng = _random.Random(42)
@@ -114,6 +115,7 @@ async def _seed_once():
     demand_signals = generate_demand(products, seed=42)
     orders = generate_orders(suppliers, products, supplier_products, routes, seed=42)
     risk_events, risk_impacts = generate_risk_events(suppliers, routes, seed=42)
+    agent_decisions = generate_agent_decisions(risk_events, orders, suppliers, seed=42)
 
     now = datetime.now().isoformat()
 
@@ -132,6 +134,7 @@ async def _seed_once():
     _ts(orders, ["created_at", "updated_at"])
     _ts(risk_events, ["created_at"])
     _ts(risk_impacts, ["created_at"])
+    _ts(agent_decisions, ["created_at"])
 
     async def _insert(session, table_name, rows):
         if not rows:
@@ -152,6 +155,7 @@ async def _seed_once():
         await _insert(session, "orders", orders)
         await _insert(session, "risk_events", risk_events)
         await _insert(session, "risk_event_impacts", risk_impacts)
+        await _insert(session, "agent_decisions", agent_decisions)
         await session.commit()
 
 
