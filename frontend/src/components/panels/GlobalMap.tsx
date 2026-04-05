@@ -66,9 +66,11 @@ export function GlobalMap({ className }: { className?: string }) {
         style={{ background: '#070d15' }}
       >
         <ComposableMap
-          projection="geoMercator"
-          projectionConfig={{ scale: 130, center: [20, 10] }}
-          style={{ width: '100%', height: 'auto' }}
+          projection="geoNaturalEarth1"
+          projectionConfig={{ scale: 160, center: [10, 0] }}
+          style={{ width: '100%', height: '100%' }}
+          width={900}
+          height={420}
         >
           <Geographies geography={GEO_URL}>
             {({ geographies }) =>

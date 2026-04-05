@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Sidebar } from './Sidebar';
 import { StatusBar } from './StatusBar';
 import { useDashboardStore } from '../../stores/dashboardStore';
@@ -21,12 +21,9 @@ function AgentChatTabs({ className, style }: { className?: string; style?: React
       className={`flex flex-col ${className ?? ''}`}
       style={{ minHeight: 0, ...style }}
     >
-      {/* Tab header */}
       <div
         className="flex flex-shrink-0"
-        style={{
-          borderBottom: '1px solid var(--wr-border)',
-        }}
+        style={{ borderBottom: '1px solid var(--wr-border)' }}
       >
         {(['agents', 'chat'] as Tab[]).map((t) => (
           <button
@@ -43,8 +40,7 @@ function AgentChatTabs({ className, style }: { className?: string; style?: React
           </button>
         ))}
       </div>
-      {/* Tab content */}
-      <div className="flex-1 min-h-0 overflow-hidden">
+      <div className="flex-1 min-h-0 overflow-auto">
         {tab === 'agents' ? (
           <AgentLog className="h-full border-0 rounded-none" />
         ) : (
@@ -55,9 +51,38 @@ function AgentChatTabs({ className, style }: { className?: string; style?: React
   );
 }
 
+/** Section IDs the sidebar can scroll to */
+const SECTION_IDS: Record<string, string> = {
+  overview: 'section-map',
+  risks: 'section-risk',
+  suppliers: 'section-suppliers',
+  orders: 'section-orders',
+  demand: 'section-demand',
+  simulations: 'section-sim',
+  agents: 'section-agents',
+};
+
 export function WarRoomShell() {
   const sidebarOpen = useDashboardStore((s) => s.sidebarOpen);
   const toggleSidebar = useDashboardStore((s) => s.toggleSidebar);
+  const mainRef = useRef<HTMLElement>(null);
+
+  // Override setActivePanel to also scroll to the section
+  const originalSetActive = useDashboardStore.getState().setActivePanel;
+  useDashboardStore.setState({
+    setActivePanel: (id: string) => {
+      originalSetActive(id);
+      const sectionId = SECTION_IDS[id];
+      if (sectionId) {
+        setTimeout(() => {
+          const el = document.getElementById(sectionId);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 50);
+      }
+    },
+  });
 
   return (
     <div className="h-screen flex flex-col overflow-hidden" style={{ background: 'var(--wr-bg-primary)' }}>
@@ -114,45 +139,45 @@ export function WarRoomShell() {
 
       {/* Main Area */}
       <div className="flex flex-1 min-h-0">
-        {/* Sidebar */}
         <Sidebar />
 
-        {/* Content Grid */}
-        <main className="flex-1 min-w-0 p-2 overflow-hidden">
-          <div
-            className="grid gap-2 h-full"
-            style={{
-              gridTemplateColumns: '1fr 1fr 340px',
-              gridTemplateRows: '1.8fr 1fr 1fr',
-              gridTemplateAreas: `
-                "map map agents"
-                "risk suppliers agents"
-                "demand orders sim"
-              `,
-            }}
-          >
-            <div style={{ gridArea: 'map' }} className="min-h-0 overflow-hidden">
-              <GlobalMap className="h-full" />
+        {/* Scrollable content */}
+        <main ref={mainRef} className="flex-1 min-w-0 p-2 overflow-y-auto">
+          {/* Row 1: Map + Agent panel */}
+          <div id="section-map" className="grid gap-2 mb-2" style={{ gridTemplateColumns: '1fr 340px', height: '420px' }}>
+            <GlobalMap className="h-full" />
+            <div
+              className="h-full overflow-hidden"
+              style={{
+                background: 'var(--wr-bg-surface)',
+                border: '1px solid var(--wr-border)',
+                borderRadius: 'var(--wr-radius-lg)',
+              }}
+              id="section-agents"
+            >
+              <AgentChatTabs className="h-full" />
             </div>
-            <div style={{ gridArea: 'risk' }} className="min-h-0 overflow-hidden">
+          </div>
+
+          {/* Row 2: Risk + Suppliers */}
+          <div className="grid gap-2 mb-2" style={{ gridTemplateColumns: '1fr 1fr', height: '320px' }}>
+            <div id="section-risk" className="overflow-hidden h-full">
               <RiskFeed className="h-full" />
             </div>
-            <div style={{ gridArea: 'suppliers' }} className="min-h-0 overflow-hidden">
+            <div id="section-suppliers" className="overflow-hidden h-full">
               <SupplierGrid className="h-full" />
             </div>
-            <div style={{ gridArea: 'orders' }} className="min-h-0 overflow-hidden">
-              <OrderTracker className="h-full" />
-            </div>
-            <div style={{ gridArea: 'demand' }} className="min-h-0 overflow-hidden">
+          </div>
+
+          {/* Row 3: Demand + Orders + Simulation */}
+          <div className="grid gap-2 mb-2" style={{ gridTemplateColumns: '1fr 1fr 1fr', height: '320px' }}>
+            <div id="section-demand" className="overflow-hidden h-full">
               <DemandChart className="h-full" />
             </div>
-            <div
-              style={{ gridArea: 'agents', background: 'var(--wr-bg-surface)', border: '1px solid var(--wr-border)', borderRadius: 'var(--wr-radius-lg)' }}
-              className="min-h-0 overflow-hidden"
-            >
-              <AgentChatTabs />
+            <div id="section-orders" className="overflow-hidden h-full">
+              <OrderTracker className="h-full" />
             </div>
-            <div style={{ gridArea: 'sim' }} className="min-h-0 overflow-hidden">
+            <div id="section-sim" className="overflow-hidden h-full">
               <SimPanel className="h-full" />
             </div>
           </div>
