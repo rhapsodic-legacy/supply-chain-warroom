@@ -141,14 +141,21 @@ export function WarRoomShell() {
       <div className="flex flex-1 min-h-0">
         <Sidebar />
 
-        {/* Scrollable content */}
+        {/*
+          Scrollable content — NO fixed heights on rows.
+          Panels auto-size to their content. The main area scrolls.
+          This guarantees no panel is ever clipped regardless of content.
+        */}
         <main ref={mainRef} className="flex-1 min-w-0 p-2 overflow-y-auto">
           {/* Row 1: Map + Agent panel */}
-          <div id="section-map" className="grid gap-2 mb-2" style={{ gridTemplateColumns: '1fr 340px', height: '420px' }}>
-            <GlobalMap className="h-full" />
+          <div id="section-map" className="grid gap-2 mb-2" style={{ gridTemplateColumns: '1fr 340px' }}>
+            <div style={{ minHeight: '380px' }}>
+              <GlobalMap className="h-full" />
+            </div>
             <div
-              className="h-full overflow-hidden"
               style={{
+                minHeight: '380px',
+                maxHeight: '500px',
                 background: 'var(--wr-bg-surface)',
                 border: '1px solid var(--wr-border)',
                 borderRadius: 'var(--wr-radius-lg)',
@@ -160,25 +167,25 @@ export function WarRoomShell() {
           </div>
 
           {/* Row 2: Risk + Suppliers */}
-          <div className="grid gap-2 mb-2" style={{ gridTemplateColumns: '1fr 1fr', height: '320px' }}>
-            <div id="section-risk" className="overflow-hidden h-full">
-              <RiskFeed className="h-full" />
+          <div className="grid gap-2 mb-2 items-start" style={{ gridTemplateColumns: '1fr 1fr' }}>
+            <div id="section-risk">
+              <RiskFeed />
             </div>
-            <div id="section-suppliers" className="overflow-hidden h-full">
-              <SupplierGrid className="h-full" />
+            <div id="section-suppliers">
+              <SupplierGrid />
             </div>
           </div>
 
           {/* Row 3: Demand + Orders + Simulation */}
-          <div className="grid gap-2 mb-2" style={{ gridTemplateColumns: '1fr 1fr 1fr', height: '320px' }}>
-            <div id="section-demand" className="overflow-hidden h-full">
-              <DemandChart className="h-full" />
+          <div className="grid gap-2 mb-2 items-start" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
+            <div id="section-demand">
+              <DemandChart />
             </div>
-            <div id="section-orders" className="overflow-hidden h-full">
-              <OrderTracker className="h-full" />
+            <div id="section-orders">
+              <OrderTracker />
             </div>
-            <div id="section-sim" className="overflow-hidden h-full">
-              <SimPanel className="h-full" />
+            <div id="section-sim">
+              <SimPanel />
             </div>
           </div>
         </main>
