@@ -7,26 +7,22 @@ import {
   Tooltip,
   ResponsiveContainer,
   CartesianGrid,
-  ReferenceLine,
 } from 'recharts';
 import { Card } from '../shared/Card';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { ErrorCard } from '../shared/ErrorCard';
 import { EmptyState } from '../shared/EmptyState';
 import { useDemand } from '../../hooks/useDemand';
-import type { DemandSignal } from '../../types/api';
 
 interface ChartDataPoint {
   date: string;
   label: string;
   forecast: number;
-  actual: number;
-  variance: number;
-  overThreshold: boolean;
+  actual: number | null;
 }
 
 function formatDate(iso: string): string {
-  const d = new Date(iso);
+  const d = new Date(iso + 'T00:00:00');
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
@@ -35,17 +31,39 @@ export function DemandChart({ className }: { className?: string }) {
 
   const chartData = useMemo<ChartDataPoint[]>(() => {
     if (!signals) return [];
-    return [...signals]
-      .sort((a, b) => new Date(a.signal_date).getTime() - new Date(b.signal_date).getTime())
-      .map((s: DemandSignal) => ({
-        date: s.signal_date,
-        label: formatDate(s.signal_date),
-        forecast: s.forecast_qty,
-        actual: s.actual_qty ?? 0,
-        variance: s.variance_pct ?? 0,
-        overThreshold: (s.actual_qty ?? 0) > s.forecast_qty * 1.1,
+
+    // Aggregate by date: sum forecast and actual across all products/regions
+    const byDate = new Map<string, { forecast: number; actual: number | null }>();
+    for (const s of signals) {
+      const existing = byDate.get(s.signal_date);
+      if (existing) {
+        existing.forecast += s.forecast_qty;
+        if (s.actual_qty != null) {
+          existing.actual = (existing.actual ?? 0) + s.actual_qty;
+        }
+      } else {
+        byDate.set(s.signal_date, {
+          forecast: s.forecast_qty,
+          actual: s.actual_qty != null ? s.actual_qty : null,
+        });
+      }
+    }
+
+    return [...byDate.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, vals]) => ({
+        date,
+        label: formatDate(date),
+        forecast: vals.forecast,
+        actual: vals.actual,
       }));
   }, [signals]);
+
+  // Find the dividing line between historical and forecast-only
+  const todayLabel = useMemo(() => {
+    const lastActual = chartData.filter((d) => d.actual != null).pop();
+    return lastActual?.label ?? null;
+  }, [chartData]);
 
   if (isLoading) return <LoadingSpinner label="Loading demand data..." />;
   if (error) return <ErrorCard message={(error as Error).message} />;
@@ -66,12 +84,11 @@ export function DemandChart({ className }: { className?: string }) {
             Actual
           </span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className="inline-block w-3 h-2 rounded" style={{ background: 'rgba(248, 81, 73, 0.3)' }} />
-          <span className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--wr-text-muted)' }}>
-            Variance &gt;10%
+        {todayLabel && (
+          <span className="text-[10px] font-mono-numbers" style={{ color: 'var(--wr-text-muted)' }}>
+            Historical through {todayLabel}
           </span>
-        </div>
+        )}
       </div>
 
       <ResponsiveContainer width="100%" height={280}>
@@ -101,11 +118,13 @@ export function DemandChart({ className }: { className?: string }) {
             tick={{ fontSize: 10, fill: 'var(--wr-text-muted)', fontFamily: 'var(--wr-font-mono)' }}
             axisLine={{ stroke: '#1a2332' }}
             tickLine={false}
+            interval="preserveStartEnd"
           />
           <YAxis
             tick={{ fontSize: 10, fill: 'var(--wr-text-muted)', fontFamily: 'var(--wr-font-mono)' }}
             axisLine={false}
             tickLine={false}
+            tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}K` : String(v)}
           />
 
           <Tooltip
@@ -120,24 +139,12 @@ export function DemandChart({ className }: { className?: string }) {
             }}
             labelStyle={{ color: 'var(--wr-text-secondary)', marginBottom: 4 }}
             formatter={(value, name) => {
-              const label = name === 'forecast' ? 'Forecast' : name === 'actual' ? 'Actual' : String(name);
+              const label = name === 'forecast' ? 'Forecast' : 'Actual';
+              if (value == null) return ['N/A', label];
               return [Number(value).toLocaleString(), label];
             }}
             cursor={{ stroke: 'var(--wr-border-active)', strokeWidth: 1, strokeDasharray: '4 4' }}
           />
-
-          {/* Highlight variance > 10% zones */}
-          {chartData
-            .filter((d) => d.overThreshold)
-            .map((d) => (
-              <ReferenceLine
-                key={d.date}
-                x={d.label}
-                stroke="var(--wr-red)"
-                strokeDasharray="3 3"
-                strokeOpacity={0.3}
-              />
-            ))}
 
           <Area
             type="monotone"
@@ -157,6 +164,7 @@ export function DemandChart({ className }: { className?: string }) {
             fill="url(#gradActual)"
             dot={false}
             activeDot={{ r: 4, fill: '#3fb950', stroke: 'var(--wr-bg-surface)' }}
+            connectNulls={false}
           />
         </AreaChart>
       </ResponsiveContainer>

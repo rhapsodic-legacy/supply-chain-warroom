@@ -8,9 +8,9 @@ async def list_demand_signals(
     db: AsyncSession,
     product_id: str | None = None,
     region: str | None = None,
-    limit: int = 200,
+    limit: int = 4000,
 ) -> list[DemandSignal]:
-    stmt = select(DemandSignal).order_by(DemandSignal.signal_date.desc()).limit(limit)
+    stmt = select(DemandSignal).order_by(DemandSignal.signal_date.asc()).limit(limit)
     if product_id:
         stmt = stmt.where(DemandSignal.product_id == product_id)
     if region:
