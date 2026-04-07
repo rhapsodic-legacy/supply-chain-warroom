@@ -10,7 +10,13 @@ from app.database import init_db
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
+
+    # Start live data ingestion in the background
+    from app.ingestion.scheduler import start_scheduler, stop_scheduler
+
+    start_scheduler()
     yield
+    stop_scheduler()
 
 
 def create_app() -> FastAPI:
@@ -57,6 +63,19 @@ def create_app() -> FastAPI:
     @application.get("/health")
     async def health_check():
         return {"status": "ok"}
+
+    @application.post("/api/v1/ingest/trigger")
+    async def trigger_ingestion():
+        """Manually trigger a live data ingestion cycle."""
+        from app.ingestion.gdelt import ingest_gdelt_news
+        from app.ingestion.weather import ingest_weather_alerts
+
+        weather_count = await ingest_weather_alerts()
+        news_count = await ingest_gdelt_news()
+        return {
+            "weather_events_created": weather_count,
+            "news_events_created": news_count,
+        }
 
     return application
 
