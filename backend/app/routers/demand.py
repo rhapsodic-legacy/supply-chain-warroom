@@ -12,7 +12,7 @@ router = APIRouter(prefix="/api/v1/demand", tags=["demand"])
 async def list_demand_signals(
     product_id: str | None = Query(None),
     region: str | None = Query(None),
-    limit: int = Query(200, ge=1, le=1000),
+    limit: int = Query(5000, ge=1, le=10000),
     db: AsyncSession = Depends(get_db),
 ):
     return await demand_service.list_demand_signals(
