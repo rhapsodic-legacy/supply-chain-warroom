@@ -134,4 +134,16 @@ async def run_simulation(db: AsyncSession, sim_id: str) -> Simulation | None:
     sim.completed_at = datetime.utcnow()
     await db.flush()
     await db.refresh(sim)
+
+    # Broadcast simulation result to SSE consumers
+    from app.routers.stream import publish_event
+
+    await publish_event("agent_action", {
+        "action": f"Simulation '{sim.name}' {sim.status}",
+        "agent_type": "simulation",
+        "decision_type": "simulation_run",
+        "simulation_id": sim.id,
+        "status": sim.status,
+    })
+
     return sim

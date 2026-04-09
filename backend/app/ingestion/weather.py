@@ -147,6 +147,7 @@ async def ingest_weather_alerts() -> int:
     session_factory = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     created = 0
+    new_events: list[dict] = []
 
     # Get existing active weather events to avoid duplicates
     async with session_factory() as session:
@@ -213,6 +214,15 @@ async def ingest_weather_alerts() -> int:
             )
             session.add(event)
             created += 1
+            new_events.append({
+                "id": event.id,
+                "title": title,
+                "severity": severity,
+                "severity_score": score,
+                "event_type": "weather",
+                "affected_region": port["region"],
+                "description": desc,
+            })
             logger.info(
                 "Weather: created risk event — %s [%s] (%s)",
                 title,
@@ -224,5 +234,13 @@ async def ingest_weather_alerts() -> int:
             await session.commit()
 
     await engine.dispose()
+
+    # Broadcast new weather events to SSE consumers
+    if new_events:
+        from app.routers.stream import publish_event
+
+        for evt in new_events:
+            await publish_event("risk_update", evt)
+
     logger.info("Weather ingestion complete: %d new events", created)
     return created

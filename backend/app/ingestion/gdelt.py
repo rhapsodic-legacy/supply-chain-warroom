@@ -241,6 +241,7 @@ async def ingest_gdelt_news() -> int:
             unique_articles.append(article)
 
     # Create risk events for new articles
+    new_events: list[dict] = []
     async with session_factory() as session:
         for article in unique_articles:
             title = article.get("title", "").strip()
@@ -280,11 +281,27 @@ async def ingest_gdelt_news() -> int:
             )
             session.add(event)
             created += 1
+            new_events.append({
+                "id": event.id,
+                "title": event.title,
+                "severity": severity,
+                "severity_score": severity_score,
+                "event_type": event_type,
+                "affected_region": region,
+            })
             logger.info("GDELT: created risk event — %s [%s]", title[:80], severity)
 
         if created > 0:
             await session.commit()
 
     await engine.dispose()
+
+    # Broadcast new risk events to SSE consumers
+    if new_events:
+        from app.routers.stream import publish_event
+
+        for evt in new_events:
+            await publish_event("risk_update", evt)
+
     logger.info("GDELT ingestion complete: %d new events", created)
     return created
