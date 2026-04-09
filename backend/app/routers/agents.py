@@ -7,11 +7,14 @@ from app.database import get_db
 from app.schemas import (
     AgentDecisionBrief,
     AgentDecisionResponse,
+    AgentHandoffResponse,
+    AgentHandoffSessionResponse,
     ChatRequest,
     ChatResponse,
     DecisionStatusUpdate,
 )
 from app.services import agent_service
+from app.services import handoff_service
 
 router = APIRouter(prefix="/api/v1/agents", tags=["agents"])
 
@@ -50,6 +53,23 @@ async def update_decision_status(
     if not result:
         raise HTTPException(status_code=404, detail="Agent decision not found")
     return result
+
+
+@router.get("/handoffs", response_model=list[AgentHandoffResponse])
+async def list_handoffs(
+    session_id: str | None = Query(None),
+    limit: int = Query(50, ge=1, le=200),
+    db: AsyncSession = Depends(get_db),
+):
+    return await handoff_service.list_handoffs(db, session_id=session_id, limit=limit)
+
+
+@router.get("/handoffs/sessions", response_model=list[AgentHandoffSessionResponse])
+async def list_handoff_sessions(
+    limit: int = Query(20, ge=1, le=100),
+    db: AsyncSession = Depends(get_db),
+):
+    return await handoff_service.list_sessions(db, limit=limit)
 
 
 @router.post("/chat", response_model=ChatResponse)

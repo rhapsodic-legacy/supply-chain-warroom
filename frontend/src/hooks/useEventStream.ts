@@ -79,6 +79,10 @@ function handleEvent(
       });
       break;
 
+    case 'agent_handoff':
+      qc.invalidateQueries({ queryKey: ['agent-handoff-sessions'] });
+      break;
+
     case 'supply_alert':
       qc.invalidateQueries({ queryKey: ['dashboard', 'supply-health'] });
       addNotification({

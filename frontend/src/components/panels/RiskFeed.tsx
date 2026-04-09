@@ -31,6 +31,8 @@ const eventTypeIcons: Record<string, string> = {
 export function RiskFeed({ className }: { className?: string }) {
   const { data: events, isLoading, error } = useRiskEvents(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [showAll, setShowAll] = useState(false);
+  const PREVIEW_COUNT = 4;
 
   if (isLoading) return <LoadingSpinner label="Scanning threats..." />;
   if (error) return <ErrorCard message={(error as Error).message} />;
@@ -40,10 +42,13 @@ export function RiskFeed({ className }: { className?: string }) {
     (a, b) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime()
   );
 
+  const visible = showAll ? sorted : sorted.slice(0, PREVIEW_COUNT);
+  const hiddenCount = sorted.length - PREVIEW_COUNT;
+
   return (
     <Card className={className} title="Risk Feed" badge={<Badge severity="critical" dot>{events.length} Active</Badge>}>
       <div className="space-y-2 flex-1 overflow-y-auto pr-1" style={{ minHeight: 0 }}>
-        {sorted.map((event) => {
+        {visible.map((event) => {
           const isExpanded = expandedId === event.id;
           const isCritical = event.severity === 'critical';
 
@@ -135,6 +140,25 @@ export function RiskFeed({ className }: { className?: string }) {
             </div>
           );
         })}
+        {hiddenCount > 0 && (
+          <button
+            className="w-full py-2 text-[11px] font-semibold uppercase tracking-wider rounded-lg transition-all duration-200"
+            style={{
+              color: 'var(--wr-cyan)',
+              background: 'var(--wr-cyan-dim)',
+              border: '1px solid rgba(88, 166, 255, 0.2)',
+            }}
+            onClick={() => setShowAll(!showAll)}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(88, 166, 255, 0.15)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'var(--wr-cyan-dim)';
+            }}
+          >
+            {showAll ? 'Show Less' : `Show ${hiddenCount} More`}
+          </button>
+        )}
       </div>
     </Card>
   );

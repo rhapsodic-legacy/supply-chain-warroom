@@ -328,3 +328,38 @@ body {
   color: var(--wr-cyan);
   border: 1px solid rgba(88, 166, 255, 0.3);
 }
+
+/* ─── Agent Pipeline ─── */
+@keyframes pipeline-pulse {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(88, 166, 255, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(88, 166, 255, 0.6),
+                0 0 4px rgba(88, 166, 255, 0.3);
+  }
+}
+
+.pipeline-node-active {
+  animation: pipeline-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pipeline-flow {
+  0% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: 200% 0%;
+  }
+}
+
+.pipeline-connector-active {
+  background: linear-gradient(
+    90deg,
+    var(--wr-border),
+    var(--wr-cyan),
+    var(--wr-border)
+  ) !important;
+  background-size: 200% 100%;
+  animation: pipeline-flow 1.2s linear infinite;
+}

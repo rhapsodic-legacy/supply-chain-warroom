@@ -260,9 +260,32 @@ export interface Notification {
   read: boolean;
 }
 
+/* ─── Agent Handoffs ─── */
+export interface AgentHandoff {
+  id: string;
+  session_id: string;
+  sequence: number;
+  from_agent: string;
+  to_agent: string;
+  query: string;
+  status: 'running' | 'completed' | 'error';
+  result_summary: string | null;
+  duration_ms: number | null;
+  started_at: string;
+  completed_at: string | null;
+}
+
+export interface AgentHandoffSession {
+  session_id: string;
+  handoffs: AgentHandoff[];
+  started_at: string;
+  completed_at: string | null;
+  total_duration_ms: number | null;
+}
+
 /* ─── SSE Events ─── */
 export interface StreamEvent {
-  type: 'risk_update' | 'order_update' | 'agent_action' | 'supply_alert' | 'heartbeat';
+  type: 'risk_update' | 'order_update' | 'agent_action' | 'agent_handoff' | 'supply_alert' | 'heartbeat';
   data: Record<string, unknown>;
   timestamp: string;
 }

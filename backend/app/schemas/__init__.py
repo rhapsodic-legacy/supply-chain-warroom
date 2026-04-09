@@ -1,4 +1,5 @@
 from app.schemas.agent import AgentDecisionBrief, AgentDecisionResponse, DecisionStatusUpdate
+from app.schemas.handoff import AgentHandoffResponse, AgentHandoffSessionResponse
 from app.schemas.dashboard import (
     ChatMessage,
     ChatRequest,
@@ -39,6 +40,9 @@ __all__ = [
     "AgentDecisionBrief",
     "AgentDecisionResponse",
     "DecisionStatusUpdate",
+    # Handoff
+    "AgentHandoffResponse",
+    "AgentHandoffSessionResponse",
     # Simulation
     "SimulationCreate",
     "SimulationBrief",

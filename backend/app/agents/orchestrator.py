@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import json
 import logging
+import time
+import uuid
 from datetime import datetime
 from typing import Any
 
@@ -20,7 +22,8 @@ from app.agents.execution_agent import run_execution_agent
 from app.agents.risk_monitor import run_risk_monitor
 from app.agents.simulation_agent import run_simulation_agent
 from app.agents.strategy_agent import run_strategy_agent
-from app.models import AgentDecision, Order, RiskEvent, Simulation
+from app.models import AgentDecision, AgentHandoff, Order, RiskEvent, Simulation
+from app.routers.stream import publish_event
 from app.schemas import ChatResponse
 
 logger = logging.getLogger(__name__)
@@ -338,28 +341,65 @@ async def _get_war_room_context(db: AsyncSession) -> str:
 # ---------------------------------------------------------------------------
 
 
+# Agent tools that represent actual specialist handoffs (not direct DB queries)
+_SPECIALIST_AGENTS = {"risk_monitor", "simulation", "strategy", "execution"}
+
+
 async def _execute_orchestrator_tool(
     tool_name: str,
     tool_input: dict,
     db: AsyncSession,
+    session_id: str | None = None,
+    sequence: int = 0,
 ) -> str:
-    """Dispatch an orchestrator tool call to the appropriate handler."""
+    """Dispatch an orchestrator tool call to the appropriate handler.
+
+    When the tool is a specialist agent, creates a handoff record and
+    broadcasts SSE events for pipeline visibility.
+    """
+    is_handoff = tool_name in _SPECIALIST_AGENTS and session_id is not None
+
+    handoff: AgentHandoff | None = None
+    if is_handoff:
+        handoff = AgentHandoff(
+            session_id=session_id,
+            sequence=sequence,
+            from_agent="orchestrator",
+            to_agent=tool_name,
+            query=tool_input.get("query", ""),
+            status="running",
+        )
+        db.add(handoff)
+        await db.flush()
+
+        await publish_event("agent_handoff", {
+            "handoff_id": handoff.id,
+            "session_id": session_id,
+            "sequence": sequence,
+            "from_agent": "orchestrator",
+            "to_agent": tool_name,
+            "query": tool_input.get("query", ""),
+            "status": "running",
+        })
+
+    start = time.monotonic()
+
     try:
         if tool_name == "risk_monitor":
             result = await run_risk_monitor(db, tool_input["query"])
-            return result["response"]
+            response_text = result["response"]
 
         elif tool_name == "simulation":
             result = await run_simulation_agent(db, tool_input["query"])
-            return result["response"]
+            response_text = result["response"]
 
         elif tool_name == "strategy":
             result = await run_strategy_agent(db, tool_input["query"])
-            return result["response"]
+            response_text = result["response"]
 
         elif tool_name == "execution":
             result = await run_execution_agent(db, tool_input["query"])
-            return result["response"]
+            response_text = result["response"]
 
         elif tool_name == "query_decision_log":
             return await _query_decision_log(
@@ -374,8 +414,48 @@ async def _execute_orchestrator_tool(
         else:
             return json.dumps({"error": f"Unknown tool: {tool_name}"})
 
+        # Record successful handoff completion
+        if handoff:
+            elapsed_ms = int((time.monotonic() - start) * 1000)
+            handoff.status = "completed"
+            handoff.completed_at = datetime.utcnow()
+            handoff.duration_ms = elapsed_ms
+            handoff.result_summary = response_text[:300] if response_text else None
+            await db.flush()
+
+            await publish_event("agent_handoff", {
+                "handoff_id": handoff.id,
+                "session_id": session_id,
+                "sequence": sequence,
+                "from_agent": "orchestrator",
+                "to_agent": tool_name,
+                "status": "completed",
+                "duration_ms": elapsed_ms,
+            })
+
+        return response_text
+
     except Exception as exc:
         logger.exception("Orchestrator tool '%s' failed", tool_name)
+
+        if handoff:
+            elapsed_ms = int((time.monotonic() - start) * 1000)
+            handoff.status = "error"
+            handoff.completed_at = datetime.utcnow()
+            handoff.duration_ms = elapsed_ms
+            handoff.result_summary = str(exc)[:300]
+            await db.flush()
+
+            await publish_event("agent_handoff", {
+                "handoff_id": handoff.id,
+                "session_id": session_id,
+                "sequence": sequence,
+                "from_agent": "orchestrator",
+                "to_agent": tool_name,
+                "status": "error",
+                "duration_ms": elapsed_ms,
+            })
+
         return json.dumps({"error": f"Tool '{tool_name}' failed: {str(exc)}"})
 
 
@@ -387,11 +467,13 @@ async def _execute_orchestrator_tool(
 async def run_orchestrator(db: AsyncSession, message: str) -> dict:
     """Run the orchestrator agent loop.
 
-    Returns ``{"response": str, "actions": list[dict]}``.
+    Returns ``{"response": str, "actions": list[dict], "session_id": str}``.
     """
     client = anthropic.AsyncAnthropic()
     messages: list[dict[str, Any]] = [{"role": "user", "content": message}]
     all_actions: list[dict] = []
+    session_id = str(uuid.uuid4())
+    sequence_counter = 0
 
     while True:
         response = await client.messages.create(
@@ -409,7 +491,14 @@ async def run_orchestrator(db: AsyncSession, message: str) -> dict:
                 if block.type != "tool_use":
                     continue
 
-                tool_result_str = await _execute_orchestrator_tool(block.name, block.input, db)
+                tool_result_str = await _execute_orchestrator_tool(
+                    block.name,
+                    block.input,
+                    db,
+                    session_id=session_id,
+                    sequence=sequence_counter,
+                )
+                sequence_counter += 1
 
                 all_actions.append(
                     {
@@ -439,6 +528,7 @@ async def run_orchestrator(db: AsyncSession, message: str) -> dict:
             return {
                 "response": "\n".join(text_parts),
                 "actions": all_actions,
+                "session_id": session_id,
             }
 
 

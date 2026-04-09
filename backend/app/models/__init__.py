@@ -5,6 +5,7 @@ from app.models.order import Order, OrderEvent
 from app.models.demand import DemandSignal
 from app.models.risk_event import RiskEvent, RiskEventImpact
 from app.models.agent_decision import AgentDecision
+from app.models.agent_handoff import AgentHandoff
 from app.models.simulation import Simulation
 
 __all__ = [
@@ -18,5 +19,6 @@ __all__ = [
     "RiskEvent",
     "RiskEventImpact",
     "AgentDecision",
+    "AgentHandoff",
     "Simulation",
 ]

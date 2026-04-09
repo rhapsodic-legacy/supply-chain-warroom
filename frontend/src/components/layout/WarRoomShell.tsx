@@ -8,13 +8,20 @@ import { SupplierGrid } from '../panels/SupplierGrid';
 import { OrderTracker } from '../panels/OrderTracker';
 import { DemandChart } from '../panels/DemandChart';
 import { AgentLog } from '../panels/AgentLog';
+import { AgentPipeline } from '../panels/AgentPipeline';
 import { SimPanel } from '../panels/SimPanel';
 import { ChatPanel } from '../panels/ChatPanel';
 
-type Tab = 'agents' | 'chat';
+type Tab = 'pipeline' | 'agents' | 'chat';
+
+const TAB_LABELS: Record<Tab, string> = {
+  pipeline: 'Pipeline',
+  agents: 'Agent Log',
+  chat: 'Chat',
+};
 
 function AgentChatTabs({ className, style }: { className?: string; style?: React.CSSProperties }) {
-  const [tab, setTab] = useState<Tab>('agents');
+  const [tab, setTab] = useState<Tab>('pipeline');
 
   return (
     <div
@@ -25,7 +32,7 @@ function AgentChatTabs({ className, style }: { className?: string; style?: React
         className="flex flex-shrink-0"
         style={{ borderBottom: '1px solid var(--wr-border)' }}
       >
-        {(['agents', 'chat'] as Tab[]).map((t) => (
+        {(['pipeline', 'agents', 'chat'] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -36,12 +43,14 @@ function AgentChatTabs({ className, style }: { className?: string; style?: React
               borderBottom: tab === t ? '2px solid var(--wr-cyan)' : '2px solid transparent',
             }}
           >
-            {t === 'agents' ? 'Agent Log' : 'Chat'}
+            {TAB_LABELS[t]}
           </button>
         ))}
       </div>
       <div className="flex-1 min-h-0 overflow-auto">
-        {tab === 'agents' ? (
+        {tab === 'pipeline' ? (
+          <AgentPipeline className="h-full border-0 rounded-none" />
+        ) : tab === 'agents' ? (
           <AgentLog className="h-full border-0 rounded-none" />
         ) : (
           <ChatPanel className="h-full border-0 rounded-none" />

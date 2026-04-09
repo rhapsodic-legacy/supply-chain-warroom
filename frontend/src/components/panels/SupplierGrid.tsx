@@ -42,6 +42,8 @@ function activeSeverity(isActive: boolean): 'critical' | 'low' {
 export function SupplierGrid({ className }: { className?: string }) {
   const { data: suppliers, isLoading, error } = useSuppliers();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState(false);
+  const PREVIEW_COUNT = 6;
 
   const sorted = useMemo(() => {
     if (!suppliers) return [];
@@ -100,7 +102,7 @@ export function SupplierGrid({ className }: { className?: string }) {
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 flex-1 overflow-y-auto pr-1" style={{ minHeight: 0 }}>
-        {sorted.map((supplier) => (
+        {(expanded ? sorted : sorted.slice(0, PREVIEW_COUNT)).map((supplier) => (
           <div
             key={supplier.id}
             className={`rounded-lg p-3 cursor-pointer transition-all duration-200 hover:scale-[1.02] ${
@@ -171,6 +173,27 @@ export function SupplierGrid({ className }: { className?: string }) {
             </div>
           </div>
         ))}
+        {sorted.length > PREVIEW_COUNT && (
+          <div className="col-span-full">
+            <button
+              className="w-full py-2 text-[11px] font-semibold uppercase tracking-wider rounded-lg transition-all duration-200"
+              style={{
+                color: 'var(--wr-cyan)',
+                background: 'var(--wr-cyan-dim)',
+                border: '1px solid rgba(88, 166, 255, 0.2)',
+              }}
+              onClick={() => setExpanded(!expanded)}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(88, 166, 255, 0.15)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'var(--wr-cyan-dim)';
+              }}
+            >
+              {expanded ? 'Show Less' : `Show ${sorted.length - PREVIEW_COUNT} More`}
+            </button>
+          </div>
+        )}
       </div>
     </Card>
   );
