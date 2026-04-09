@@ -4,7 +4,7 @@ import { Badge } from '../shared/Badge';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { ErrorCard } from '../shared/ErrorCard';
 import { EmptyState } from '../shared/EmptyState';
-import { useDecisions, useDecisionAction } from '../../hooks/useAgents';
+import { useDecisions, useDecisionDetail, useDecisionAction } from '../../hooks/useAgents';
 
 
 const AGENT_COLORS: Record<string, string> = {
@@ -39,10 +39,61 @@ function timeAgo(isoDate: string): string {
   return `${days}d ago`;
 }
 
+function formatCurrency(value: number): string {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value);
+}
+
+function tryParseJson(str: string): unknown {
+  try {
+    return JSON.parse(str);
+  } catch {
+    return null;
+  }
+}
+
+/** Renders a single key-value field in the audit detail */
+function DetailField({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="mb-2.5">
+      <span
+        className="text-[10px] uppercase tracking-wider block mb-0.5"
+        style={{ color: 'var(--wr-text-muted)' }}
+      >
+        {label}
+      </span>
+      <div className="text-xs leading-relaxed" style={{ color: 'var(--wr-text-secondary)' }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/** Renders parsed JSON parameters as a mini key-value table */
+function ParamsTable({ data }: { data: Record<string, unknown> }) {
+  const entries = Object.entries(data);
+  if (!entries.length) return <span style={{ color: 'var(--wr-text-muted)' }}>none</span>;
+  return (
+    <div
+      className="rounded p-2 space-y-1 font-mono text-[11px]"
+      style={{ background: 'var(--wr-bg)', border: '1px solid var(--wr-border)' }}
+    >
+      {entries.map(([key, val]) => (
+        <div key={key} className="flex gap-2">
+          <span style={{ color: 'var(--wr-text-muted)' }}>{key}:</span>
+          <span style={{ color: 'var(--wr-text-primary)' }}>
+            {typeof val === 'object' ? JSON.stringify(val) : String(val)}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function AgentLog({ className }: { className?: string }) {
   const { data: decisions, isLoading, error } = useDecisions();
   const decisionAction = useDecisionAction();
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const { data: detail, isLoading: detailLoading } = useDecisionDetail(expandedId);
 
   if (isLoading) return <LoadingSpinner label="Loading agent log..." />;
   if (error) return <ErrorCard message={(error as Error).message} />;
@@ -130,16 +181,118 @@ export function AgentLog({ className }: { className?: string }) {
                 </span>
               </div>
 
+              {/* --- Expanded audit detail --- */}
               {isExpanded && (
                 <div className="mt-3 pt-3 animate-fade-in" style={{ borderTop: '1px solid var(--wr-border)' }}>
-                  <div className="mb-2">
-                    <span className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--wr-text-muted)' }}>
-                      Decision Type
-                    </span>
-                    <p className="text-xs mt-1 leading-relaxed" style={{ color: 'var(--wr-text-secondary)' }}>
+                  {detailLoading ? (
+                    <div className="py-2 text-center text-xs" style={{ color: 'var(--wr-text-muted)' }}>
+                      Loading detail...
+                    </div>
+                  ) : detail ? (
+                    <>
+                      <DetailField label="Decision Type">
+                        {detail.decision_type.replace(/_/g, ' ')}
+                      </DetailField>
+
+                      <DetailField label="Agent Reasoning">
+                        <div
+                          className="rounded p-2 whitespace-pre-wrap"
+                          style={{
+                            background: 'var(--wr-bg)',
+                            border: '1px solid var(--wr-border)',
+                            maxHeight: '120px',
+                            overflowY: 'auto',
+                          }}
+                        >
+                          {detail.reasoning}
+                        </div>
+                      </DetailField>
+
+                      {/* Parameters */}
+                      {detail.parameters && detail.parameters !== '{}' && (
+                        <DetailField label="Parameters">
+                          {(() => {
+                            const parsed = tryParseJson(detail.parameters);
+                            return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? (
+                              <ParamsTable data={parsed as Record<string, unknown>} />
+                            ) : (
+                              <span>{detail.parameters}</span>
+                            );
+                          })()}
+                        </DetailField>
+                      )}
+
+                      {/* Impact metrics */}
+                      {(detail.cost_impact != null || detail.time_impact_days != null) && (
+                        <DetailField label="Impact Assessment">
+                          <div className="flex gap-4">
+                            {detail.cost_impact != null && (
+                              <span className="font-mono-numbers">
+                                Cost:{' '}
+                                <span style={{ color: detail.cost_impact > 0 ? 'var(--wr-red)' : 'var(--wr-green)' }}>
+                                  {detail.cost_impact > 0 ? '+' : ''}{formatCurrency(detail.cost_impact)}
+                                </span>
+                              </span>
+                            )}
+                            {detail.time_impact_days != null && (
+                              <span className="font-mono-numbers">
+                                Time:{' '}
+                                <span style={{ color: detail.time_impact_days > 0 ? 'var(--wr-amber)' : 'var(--wr-green)' }}>
+                                  {detail.time_impact_days > 0 ? '+' : ''}{detail.time_impact_days}d
+                                </span>
+                              </span>
+                            )}
+                          </div>
+                        </DetailField>
+                      )}
+
+                      {/* Affected orders */}
+                      {detail.affected_orders && detail.affected_orders !== '[]' && (
+                        <DetailField label="Affected Orders">
+                          {(() => {
+                            const parsed = tryParseJson(detail.affected_orders);
+                            if (Array.isArray(parsed) && parsed.length > 0) {
+                              return (
+                                <span className="font-mono text-[11px]">
+                                  {parsed.length} order{parsed.length !== 1 ? 's' : ''}: {parsed.slice(0, 3).join(', ')}
+                                  {parsed.length > 3 ? ` +${parsed.length - 3} more` : ''}
+                                </span>
+                              );
+                            }
+                            return <span>{detail.affected_orders}</span>;
+                          })()}
+                        </DetailField>
+                      )}
+
+                      {/* Trigger event */}
+                      {detail.trigger_event_id && (
+                        <DetailField label="Triggered By">
+                          <span className="font-mono text-[11px]">{detail.trigger_event_id}</span>
+                        </DetailField>
+                      )}
+
+                      {/* Outcome notes */}
+                      {detail.outcome_notes && (
+                        <DetailField label="Reviewer Notes">
+                          <span style={{ color: 'var(--wr-text-primary)' }}>{detail.outcome_notes}</span>
+                        </DetailField>
+                      )}
+
+                      {/* Timeline */}
+                      <DetailField label="Timeline">
+                        <div className="flex gap-4 font-mono-numbers text-[11px]">
+                          <span>Decided: {new Date(detail.decided_at).toLocaleString()}</span>
+                          {detail.executed_at && (
+                            <span>Executed: {new Date(detail.executed_at).toLocaleString()}</span>
+                          )}
+                        </div>
+                      </DetailField>
+                    </>
+                  ) : (
+                    <DetailField label="Decision Type">
                       {decision.decision_type}
-                    </p>
-                  </div>
+                    </DetailField>
+                  )}
 
                   {/* Approve / Reject buttons for proposed decisions */}
                   {isProposed && (

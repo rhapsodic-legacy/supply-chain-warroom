@@ -16,6 +16,16 @@ export function useDecisions(agentType?: string) {
   });
 }
 
+export function useDecisionDetail(decisionId: string | null) {
+  return useQuery({
+    queryKey: ['agent-decision-detail', decisionId],
+    queryFn: () =>
+      api.get<AgentDecision>(`/api/v1/agents/decisions/${decisionId}`).then((r) => r.data),
+    enabled: !!decisionId,
+    staleTime: 30_000,
+  });
+}
+
 export function useDecisionAction() {
   const qc = useQueryClient();
   return useMutation({
