@@ -4,7 +4,13 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.schemas import AgentDecisionBrief, AgentDecisionResponse, ChatRequest, ChatResponse
+from app.schemas import (
+    AgentDecisionBrief,
+    AgentDecisionResponse,
+    ChatRequest,
+    ChatResponse,
+    DecisionStatusUpdate,
+)
 from app.services import agent_service
 
 router = APIRouter(prefix="/api/v1/agents", tags=["agents"])
@@ -26,6 +32,24 @@ async def get_decision(decision_id: str, db: AsyncSession = Depends(get_db)):
     if not decision:
         raise HTTPException(status_code=404, detail="Agent decision not found")
     return decision
+
+
+@router.patch("/decisions/{decision_id}", response_model=AgentDecisionResponse)
+async def update_decision_status(
+    decision_id: str,
+    body: DecisionStatusUpdate,
+    db: AsyncSession = Depends(get_db),
+):
+    """Approve or reject a proposed agent decision."""
+    try:
+        result = await agent_service.update_decision_status(
+            db, decision_id, action=body.action, notes=body.notes
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc))
+    if not result:
+        raise HTTPException(status_code=404, detail="Agent decision not found")
+    return result
 
 
 @router.post("/chat", response_model=ChatResponse)

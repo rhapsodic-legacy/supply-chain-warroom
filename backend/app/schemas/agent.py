@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
@@ -35,3 +36,10 @@ class AgentDecisionResponse(BaseModel):
     decided_at: datetime
     executed_at: datetime | None
     created_at: datetime
+
+
+class DecisionStatusUpdate(BaseModel):
+    """Request body for approving or rejecting a proposed decision."""
+
+    action: Literal["approve", "reject"]
+    notes: str | None = None

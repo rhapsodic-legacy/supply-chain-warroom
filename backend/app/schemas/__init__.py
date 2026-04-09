@@ -1,4 +1,4 @@
-from app.schemas.agent import AgentDecisionBrief, AgentDecisionResponse
+from app.schemas.agent import AgentDecisionBrief, AgentDecisionResponse, DecisionStatusUpdate
 from app.schemas.dashboard import (
     ChatMessage,
     ChatRequest,
@@ -38,6 +38,7 @@ __all__ = [
     # Agent
     "AgentDecisionBrief",
     "AgentDecisionResponse",
+    "DecisionStatusUpdate",
     # Simulation
     "SimulationCreate",
     "SimulationBrief",

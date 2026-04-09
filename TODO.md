@@ -6,7 +6,7 @@
 
 - [x] **SSE live updates on frontend** — Broadcast event bus with heartbeats, publish_event() wired into all state-change points (risks, agents, simulations, ingestion). Frontend hook already consumes.
 - [x] **Live ingestion → risk agent pipeline** — Automated triage runs after every ingestion cycle: re-scores suppliers, detects regional escalations, creates alerts, broadcasts via SSE. Optional Claude agent deep-analysis for high-risk signals.
-- [ ] **Human-in-the-loop approval gate** — Data model supports `proposed→approved→executed→rejected` statuses. Add a PATCH endpoint to transition decisions, and add approve/reject buttons in the AgentLog panel. Execution agent must pause and wait for user confirmation.
+- [x] **Human-in-the-loop approval gate** — PATCH endpoint with state machine validation, approve/reject buttons in AgentLog with glow effects on proposed decisions, SSE broadcast on status change.
 
 ## Tier 2 — Deepen the Intelligence
 

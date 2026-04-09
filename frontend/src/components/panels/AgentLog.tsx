@@ -4,7 +4,7 @@ import { Badge } from '../shared/Badge';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { ErrorCard } from '../shared/ErrorCard';
 import { EmptyState } from '../shared/EmptyState';
-import { useDecisions } from '../../hooks/useAgents';
+import { useDecisions, useDecisionAction } from '../../hooks/useAgents';
 
 
 const AGENT_COLORS: Record<string, string> = {
@@ -41,6 +41,7 @@ function timeAgo(isoDate: string): string {
 
 export function AgentLog({ className }: { className?: string }) {
   const { data: decisions, isLoading, error } = useDecisions();
+  const decisionAction = useDecisionAction();
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   if (isLoading) return <LoadingSpinner label="Loading agent log..." />;
@@ -59,6 +60,8 @@ export function AgentLog({ className }: { className?: string }) {
           const agentColor = AGENT_COLORS[decision.agent_type] ?? '#58a6ff';
           const agentLabel = AGENT_LABELS[decision.agent_type] ?? decision.agent_type.slice(0, 3).toUpperCase();
           const statusCfg = STATUS_CONFIG[decision.status] ?? STATUS_CONFIG.proposed;
+          const isProposed = decision.status === 'proposed';
+          const isPending = decisionAction.isPending && decisionAction.variables?.id === decision.id;
 
           return (
             <div
@@ -66,7 +69,10 @@ export function AgentLog({ className }: { className?: string }) {
               className="rounded-lg p-3 cursor-pointer transition-all duration-200"
               style={{
                 background: 'var(--wr-bg-elevated)',
-                border: '1px solid var(--wr-border)',
+                border: isProposed
+                  ? '1px solid var(--wr-amber)'
+                  : '1px solid var(--wr-border)',
+                boxShadow: isProposed ? '0 0 8px rgba(255, 180, 50, 0.15)' : undefined,
               }}
               onClick={() => setExpandedId(isExpanded ? null : decision.id)}
             >
@@ -134,6 +140,58 @@ export function AgentLog({ className }: { className?: string }) {
                       {decision.decision_type}
                     </p>
                   </div>
+
+                  {/* Approve / Reject buttons for proposed decisions */}
+                  {isProposed && (
+                    <div className="flex gap-2 mt-3">
+                      <button
+                        className="flex-1 py-1.5 px-3 rounded text-xs font-semibold uppercase tracking-wider transition-all duration-200 disabled:opacity-50"
+                        style={{
+                          background: 'rgba(63, 185, 80, 0.15)',
+                          color: 'var(--wr-green)',
+                          border: '1px solid rgba(63, 185, 80, 0.4)',
+                        }}
+                        disabled={isPending}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          decisionAction.mutate({ id: decision.id, action: 'approve' });
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'rgba(63, 185, 80, 0.3)';
+                          e.currentTarget.style.boxShadow = '0 0 12px rgba(63, 185, 80, 0.3)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'rgba(63, 185, 80, 0.15)';
+                          e.currentTarget.style.boxShadow = 'none';
+                        }}
+                      >
+                        {isPending && decisionAction.variables?.action === 'approve' ? 'Approving...' : 'Approve'}
+                      </button>
+                      <button
+                        className="flex-1 py-1.5 px-3 rounded text-xs font-semibold uppercase tracking-wider transition-all duration-200 disabled:opacity-50"
+                        style={{
+                          background: 'rgba(248, 81, 73, 0.15)',
+                          color: 'var(--wr-red)',
+                          border: '1px solid rgba(248, 81, 73, 0.4)',
+                        }}
+                        disabled={isPending}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          decisionAction.mutate({ id: decision.id, action: 'reject' });
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'rgba(248, 81, 73, 0.3)';
+                          e.currentTarget.style.boxShadow = '0 0 12px rgba(248, 81, 73, 0.3)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'rgba(248, 81, 73, 0.15)';
+                          e.currentTarget.style.boxShadow = 'none';
+                        }}
+                      >
+                        {isPending && decisionAction.variables?.action === 'reject' ? 'Rejecting...' : 'Reject'}
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

@@ -1,7 +1,7 @@
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, useCallback } from 'react';
 import api from '../lib/api';
-import type { AgentDecisionBrief, ChatMessage, ChatRequest, ChatResponse } from '../types/api';
+import type { AgentDecision, AgentDecisionBrief, ChatMessage, ChatRequest, ChatResponse } from '../types/api';
 
 export function useDecisions(agentType?: string) {
   return useQuery({
@@ -13,6 +13,19 @@ export function useDecisions(agentType?: string) {
         .then((r) => r.data);
     },
     refetchInterval: 10_000,
+  });
+}
+
+export function useDecisionAction() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, action, notes }: { id: string; action: 'approve' | 'reject'; notes?: string }) =>
+      api
+        .patch<AgentDecision>(`/api/v1/agents/decisions/${id}`, { action, notes })
+        .then((r) => r.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['agent-decisions'] });
+    },
   });
 }
 
