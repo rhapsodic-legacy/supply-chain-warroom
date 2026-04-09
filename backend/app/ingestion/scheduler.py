@@ -1,7 +1,9 @@
-"""Background scheduler for live data ingestion.
+"""Background scheduler for live data ingestion and risk analysis.
 
 Periodically fetches supply chain news from GDELT and weather data from
 Open-Meteo, creating risk events in the database when thresholds are met.
+After each ingestion cycle, runs automated risk triage (rule-based) and
+optionally invokes the Risk Monitor agent for deep analysis.
 """
 
 from __future__ import annotations
@@ -16,15 +18,20 @@ _task: asyncio.Task | None = None
 
 
 async def _run_loop() -> None:
-    """Main ingestion loop — runs GDELT and weather checks on a schedule."""
+    """Main ingestion + analysis loop."""
+    from app.database import async_session_factory
     from app.ingestion.gdelt import ingest_gdelt_news
     from app.ingestion.weather import ingest_weather_alerts
+    from app.services.risk_analysis import run_agent_analysis, run_triage
 
     logger.info("Ingestion scheduler started")
 
     while True:
+        weather_count = 0
+        news_count = 0
+
         try:
-            await ingest_weather_alerts()
+            weather_count = await ingest_weather_alerts()
         except Exception:
             logger.exception("Weather ingestion failed")
 
@@ -32,9 +39,21 @@ async def _run_loop() -> None:
         await asyncio.sleep(6)
 
         try:
-            await ingest_gdelt_news()
+            news_count = await ingest_gdelt_news()
         except Exception:
             logger.exception("GDELT ingestion failed")
+
+        # --- Risk analysis pipeline ---
+        total_new = weather_count + news_count
+        try:
+            async with async_session_factory() as session:
+                triage = await run_triage(session, total_new)
+
+                # Deep analysis only when triage finds concerning signals
+                if triage.get("suppliers_at_risk") or triage.get("regional_escalations"):
+                    await run_agent_analysis(session, triage)
+        except Exception:
+            logger.exception("Risk analysis pipeline failed")
 
         # Wait 30 minutes before next cycle
         await asyncio.sleep(30 * 60)

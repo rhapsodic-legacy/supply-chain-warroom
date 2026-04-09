@@ -4,8 +4,8 @@
 
 ## Tier 1 — Wire the Core Loop (make it feel alive)
 
-- [ ] **SSE live updates on frontend** — Backend SSE endpoint exists (`/api/v1/stream`) but nothing consumes it. Build a `useEventStream()` hook and wire it into RiskFeed, AgentLog, and the global status bar so events push to the dashboard in real time.
-- [ ] **Live ingestion → risk agent pipeline** — GDELT news + Open-Meteo weather ingestion is built. Wire those live signals into the risk monitor agent so it auto-detects real-world disruptions, scores them, and raises alerts via SSE — closing the loop from data → agent → dashboard.
+- [x] **SSE live updates on frontend** — Broadcast event bus with heartbeats, publish_event() wired into all state-change points (risks, agents, simulations, ingestion). Frontend hook already consumes.
+- [x] **Live ingestion → risk agent pipeline** — Automated triage runs after every ingestion cycle: re-scores suppliers, detects regional escalations, creates alerts, broadcasts via SSE. Optional Claude agent deep-analysis for high-risk signals.
 - [ ] **Human-in-the-loop approval gate** — Data model supports `proposed→approved→executed→rejected` statuses. Add a PATCH endpoint to transition decisions, and add approve/reject buttons in the AgentLog panel. Execution agent must pause and wait for user confirmation.
 
 ## Tier 2 — Deepen the Intelligence

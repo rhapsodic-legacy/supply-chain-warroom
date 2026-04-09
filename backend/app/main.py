@@ -66,15 +66,25 @@ def create_app() -> FastAPI:
 
     @application.post("/api/v1/ingest/trigger")
     async def trigger_ingestion():
-        """Manually trigger a live data ingestion cycle."""
+        """Manually trigger a live data ingestion cycle with risk analysis."""
+        from app.database import async_session_factory
         from app.ingestion.gdelt import ingest_gdelt_news
         from app.ingestion.weather import ingest_weather_alerts
+        from app.services.risk_analysis import run_triage
 
         weather_count = await ingest_weather_alerts()
         news_count = await ingest_gdelt_news()
+
+        triage_summary = {}
+        total_new = weather_count + news_count
+        if total_new > 0:
+            async with async_session_factory() as session:
+                triage_summary = await run_triage(session, total_new)
+
         return {
             "weather_events_created": weather_count,
             "news_events_created": news_count,
+            "triage": triage_summary,
         }
 
     return application
