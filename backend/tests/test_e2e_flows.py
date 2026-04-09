@@ -68,7 +68,7 @@ class TestSimulationFlow:
     """Create a simulation, run it, and verify completed results."""
 
     async def test_simulation_create_run_results(self, seeded_client):
-        # Step 1: Create a simulation
+        # Step 1: Create a simulation (auto-runs the Monte Carlo engine)
         payload = {
             "name": "E2E Suez Canal Closure Test",
             "description": "Testing the simulation pipeline end to end.",
@@ -79,9 +79,26 @@ class TestSimulationFlow:
         assert create_resp.status_code == 201
         sim = create_resp.json()
         sim_id = sim["id"]
-        assert sim["status"] == "pending"
+        # Create auto-runs; simulation should already be completed
+        assert sim["status"] == "completed"
+        assert sim["baseline_metrics"] is not None
+        assert sim["mitigated_metrics"] is not None
+        assert sim["started_at"] is not None
+        assert sim["completed_at"] is not None
 
-        # Step 2: Run the simulation
+        # Verify baseline metrics contain real simulation data
+        import json
+
+        baseline = json.loads(sim["baseline_metrics"])
+        assert "total_cost" in baseline
+        assert "fill_rate" in baseline
+        assert baseline["total_cost"] > 0
+
+        mitigated = json.loads(sim["mitigated_metrics"])
+        assert "total_cost" in mitigated
+        assert "fill_rate" in mitigated
+
+        # Step 2: Re-run via the dedicated endpoint still works
         run_resp = await seeded_client.post(f"/api/v1/simulations/{sim_id}/run")
         assert run_resp.status_code == 200
         run_data = run_resp.json()
@@ -92,10 +109,6 @@ class TestSimulationFlow:
         assert get_resp.status_code == 200
         result = get_resp.json()
         assert result["status"] == "completed"
-        assert result["baseline_metrics"] is not None
-        assert result["mitigated_metrics"] is not None
-        assert result["started_at"] is not None
-        assert result["completed_at"] is not None
 
 
 # =========================================================================

@@ -7,9 +7,8 @@ RUN pip install --no-cache-dir .
 
 COPY . .
 
-# Seed database on first run if using SQLite
-RUN python3 -c "print('Build complete')"
+RUN chmod +x entrypoint.sh
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+ENTRYPOINT ["./entrypoint.sh"]

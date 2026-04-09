@@ -23,7 +23,10 @@ async def get_simulation(sim_id: str, db: AsyncSession = Depends(get_db)):
 
 @router.post("/", response_model=SimulationResponse, status_code=201)
 async def create_simulation(data: SimulationCreate, db: AsyncSession = Depends(get_db)):
-    return await simulation_service.create_simulation(db, data)
+    sim = await simulation_service.create_simulation(db, data)
+    # Auto-run immediately so the caller gets results in one round trip
+    result = await simulation_service.run_simulation(db, sim.id)
+    return result or sim
 
 
 @router.post("/{sim_id}/run", response_model=SimulationResponse)

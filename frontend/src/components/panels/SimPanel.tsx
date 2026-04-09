@@ -17,11 +17,10 @@ import { useSimulations, useRunSimulation, useSimulation } from '../../hooks/use
 import type { SimulationBrief } from '../../types/api';
 
 const PRESET_SCENARIOS = [
-  { id: 'suez_closure', name: 'Suez Canal Closure', description: 'Simulate full blockage of the Suez Canal' },
-  { id: 'china_lockdown', name: 'China Port Lockdown', description: 'Major Chinese port shutdown' },
-  { id: 'demand_spike', name: 'Demand Spike +40%', description: 'Sudden 40% increase in demand' },
-  { id: 'supplier_failure', name: 'Key Supplier Failure', description: 'Top-tier supplier goes offline' },
-  { id: 'energy_crisis', name: 'Energy Price Surge', description: 'Global energy price spike' },
+  { id: 'suez_closure', name: 'Suez Canal Closure', description: '21-day closure of all ocean freight through the Suez Canal' },
+  { id: 'china_lockdown', name: 'Shanghai Port Congestion', description: '14-day severe congestion drops Shanghai throughput to 30%' },
+  { id: 'demand_spike', name: 'Demand Shock +60%', description: '45-day demand surge strains logistics and depletes safety stock' },
+  { id: 'supplier_failure', name: 'Key Supplier Failure', description: '30-day shutdown of highest-volume East Asia supplier' },
 ];
 
 interface ParsedMetrics {
