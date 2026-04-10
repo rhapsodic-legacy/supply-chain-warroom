@@ -62,6 +62,24 @@ class DistributionStats:
 
 
 @dataclass
+class HistogramData:
+    """Binned histogram for overlapping distribution visualisation."""
+
+    bin_edges: list[float]  # N+1 edges
+    counts: list[int]  # N bin counts
+
+    @classmethod
+    def from_values(cls, values: np.ndarray, bins: int = 30) -> "HistogramData":
+        if values.size == 0:
+            return cls(bin_edges=[], counts=[])
+        counts, edges = np.histogram(values, bins=bins)
+        return cls(
+            bin_edges=[round(float(e), 2) for e in edges],
+            counts=[int(c) for c in counts],
+        )
+
+
+@dataclass
 class SimulationResult:
     """Full output of a simulation run."""
 
@@ -75,6 +93,8 @@ class SimulationResult:
     baseline_cost: float
     baseline_delay: float
     baseline_fill_rate: float
+    cost_histogram: HistogramData | None = None
+    delay_histogram: HistogramData | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -498,4 +518,6 @@ def run_simulation(
         baseline_cost=bl_cost,
         baseline_delay=bl_delay,
         baseline_fill_rate=bl_fill,
+        cost_histogram=HistogramData.from_values(iter_costs),
+        delay_histogram=HistogramData.from_values(iter_delays),
     )

@@ -14,7 +14,15 @@ import { Badge } from '../shared/Badge';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { ErrorCard } from '../shared/ErrorCard';
 import { useSimulations, useRunSimulation, useSimulation } from '../../hooks/useSimulations';
+import { ScenarioBuilder } from './ScenarioBuilder';
+import { ScenarioComparison } from './ScenarioComparison';
+import { ExecutiveSummaryModal } from './ExecutiveSummaryModal';
+import type { CustomScenario } from './ScenarioBuilder';
 import type { SimulationBrief } from '../../types/api';
+
+type SimMode = 'presets' | 'custom';
+const COMPARE_MIN = 2;
+const COMPARE_MAX = 5;
 
 const PRESET_SCENARIOS = [
   { id: 'suez_closure', name: 'Suez Canal Closure', description: '21-day closure of all ocean freight through the Suez Canal' },
@@ -145,10 +153,21 @@ function ResultsComparison({ baseline, mitigated }: { baseline: ParsedMetrics; m
 export function SimPanel({ className }: { className?: string }) {
   const { data: simulations, isLoading, error } = useSimulations();
   const runMutation = useRunSimulation();
+  const [mode, setMode] = useState<SimMode>('presets');
   const [selectedScenario, setSelectedScenario] = useState(PRESET_SCENARIOS[0].id);
   const [selectedSimId, setSelectedSimId] = useState<string | null>(null);
+  const [showBrief, setShowBrief] = useState(false);
+  const [compareMode, setCompareMode] = useState(false);
+  const [compareIds, setCompareIds] = useState<string[]>([]);
+  const [showComparison, setShowComparison] = useState(false);
 
   const { data: selectedSim } = useSimulation(selectedSimId ?? '');
+
+  const toggleCompareId = (id: string) => {
+    setCompareIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : prev.length < COMPARE_MAX ? [...prev, id] : prev,
+    );
+  };
 
   const handleRunSimulation = () => {
     const preset = PRESET_SCENARIOS.find((s) => s.id === selectedScenario);
@@ -156,6 +175,25 @@ export function SimPanel({ className }: { className?: string }) {
     runMutation.mutate({
       name: preset.name,
       scenario_params: { scenario: preset.id },
+    });
+  };
+
+  const handleRunCustom = (scenario: CustomScenario) => {
+    runMutation.mutate({
+      name: scenario.name,
+      description: scenario.description,
+      scenario_params: {
+        name: scenario.name,
+        description: scenario.description,
+        time_horizon_days: scenario.time_horizon_days,
+        disruptions: scenario.disruptions.map((d) => ({
+          type: d.type,
+          affected_ids: [],
+          severity: d.severity,
+          duration_days: d.duration_days,
+          parameters: d.parameters,
+        })),
+      },
     });
   };
 
@@ -167,60 +205,86 @@ export function SimPanel({ className }: { className?: string }) {
 
   return (
     <Card className={className} title="Simulation Lab">
-      {/* Controls */}
-      <div className="flex items-end gap-3 mb-4">
-        <div className="flex-1">
-          <label className="text-[10px] uppercase tracking-wider block mb-1" style={{ color: 'var(--wr-text-muted)' }}>
-            Scenario
-          </label>
-          <select
-            className="w-full px-3 py-2 rounded-md text-sm font-mono-numbers cursor-pointer transition-all duration-150"
+      {/* Mode toggle */}
+      <div className="flex rounded-md mb-4 overflow-hidden" style={{ border: '1px solid var(--wr-border)' }}>
+        {(['presets', 'custom'] as const).map((m) => (
+          <button
+            key={m}
+            className="flex-1 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-all duration-150"
             style={{
-              background: 'var(--wr-bg-primary)',
-              border: '1px solid var(--wr-border)',
-              color: 'var(--wr-text-primary)',
-              outline: 'none',
-              appearance: 'none',
-              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23484f58' d='M2 4l4 4 4-4'/%3E%3C/svg%3E")`,
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'right 10px center',
-              paddingRight: '30px',
+              background: mode === m ? 'rgba(88, 166, 255, 0.15)' : 'transparent',
+              color: mode === m ? 'var(--wr-cyan)' : 'var(--wr-text-muted)',
+              borderRight: m === 'presets' ? '1px solid var(--wr-border)' : 'none',
             }}
-            value={selectedScenario}
-            onChange={(e) => setSelectedScenario(e.target.value)}
-            onFocus={(e) => { (e.target as HTMLElement).style.borderColor = 'var(--wr-cyan)'; }}
-            onBlur={(e) => { (e.target as HTMLElement).style.borderColor = 'var(--wr-border)'; }}
+            onClick={() => setMode(m)}
           >
-            {PRESET_SCENARIOS.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <button
-          className="px-5 py-2 rounded-md text-sm font-semibold transition-all duration-200 flex items-center gap-2 flex-shrink-0"
-          style={{
-            background: runMutation.isPending
-              ? 'var(--wr-border)'
-              : 'linear-gradient(135deg, rgba(88, 166, 255, 0.2), rgba(88, 166, 255, 0.1))',
-            color: runMutation.isPending ? 'var(--wr-text-muted)' : 'var(--wr-cyan)',
-            border: `1px solid ${runMutation.isPending ? 'var(--wr-border)' : 'rgba(88, 166, 255, 0.4)'}`,
-            cursor: runMutation.isPending ? 'not-allowed' : 'pointer',
-            boxShadow: runMutation.isPending ? 'none' : '0 0 12px rgba(88, 166, 255, 0.15)',
-          }}
-          onClick={handleRunSimulation}
-          disabled={runMutation.isPending}
-        >
-          {runMutation.isPending && <span className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} />}
-          {runMutation.isPending ? 'Running...' : 'Run Simulation'}
-        </button>
+            {m === 'presets' ? 'Presets' : 'Custom Builder'}
+          </button>
+        ))}
       </div>
 
-      {/* Scenario description */}
-      <p className="text-xs mb-4" style={{ color: 'var(--wr-text-secondary)' }}>
-        {PRESET_SCENARIOS.find((s) => s.id === selectedScenario)?.description}
-      </p>
+      {mode === 'presets' ? (
+        <>
+          {/* Preset controls */}
+          <div className="flex items-end gap-3 mb-4">
+            <div className="flex-1">
+              <label className="text-[10px] uppercase tracking-wider block mb-1" style={{ color: 'var(--wr-text-muted)' }}>
+                Scenario
+              </label>
+              <select
+                className="w-full px-3 py-2 rounded-md text-sm font-mono-numbers cursor-pointer transition-all duration-150"
+                style={{
+                  background: 'var(--wr-bg-primary)',
+                  border: '1px solid var(--wr-border)',
+                  color: 'var(--wr-text-primary)',
+                  outline: 'none',
+                  appearance: 'none',
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23484f58' d='M2 4l4 4 4-4'/%3E%3C/svg%3E")`,
+                  backgroundRepeat: 'no-repeat',
+                  backgroundPosition: 'right 10px center',
+                  paddingRight: '30px',
+                }}
+                value={selectedScenario}
+                onChange={(e) => setSelectedScenario(e.target.value)}
+                onFocus={(e) => { (e.target as HTMLElement).style.borderColor = 'var(--wr-cyan)'; }}
+                onBlur={(e) => { (e.target as HTMLElement).style.borderColor = 'var(--wr-border)'; }}
+              >
+                {PRESET_SCENARIOS.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button
+              className="px-5 py-2 rounded-md text-sm font-semibold transition-all duration-200 flex items-center gap-2 flex-shrink-0"
+              style={{
+                background: runMutation.isPending
+                  ? 'var(--wr-border)'
+                  : 'linear-gradient(135deg, rgba(88, 166, 255, 0.2), rgba(88, 166, 255, 0.1))',
+                color: runMutation.isPending ? 'var(--wr-text-muted)' : 'var(--wr-cyan)',
+                border: `1px solid ${runMutation.isPending ? 'var(--wr-border)' : 'rgba(88, 166, 255, 0.4)'}`,
+                cursor: runMutation.isPending ? 'not-allowed' : 'pointer',
+                boxShadow: runMutation.isPending ? 'none' : '0 0 12px rgba(88, 166, 255, 0.15)',
+              }}
+              onClick={handleRunSimulation}
+              disabled={runMutation.isPending}
+            >
+              {runMutation.isPending && <span className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} />}
+              {runMutation.isPending ? 'Running...' : 'Run Simulation'}
+            </button>
+          </div>
+
+          {/* Scenario description */}
+          <p className="text-xs mb-4" style={{ color: 'var(--wr-text-secondary)' }}>
+            {PRESET_SCENARIOS.find((s) => s.id === selectedScenario)?.description}
+          </p>
+        </>
+      ) : (
+        <div className="mb-4">
+          <ScenarioBuilder onRun={handleRunCustom} isPending={runMutation.isPending} />
+        </div>
+      )}
 
       {/* Error from mutation */}
       {runMutation.error && (
@@ -232,42 +296,108 @@ export function SimPanel({ className }: { className?: string }) {
       {/* Previous simulations list */}
       {simulations && simulations.length > 0 && (
         <div>
-          <span className="text-[10px] uppercase tracking-wider block mb-2" style={{ color: 'var(--wr-text-muted)' }}>
-            Previous Runs
-          </span>
-          <div className="space-y-1.5 max-h-[140px] overflow-y-auto pr-1 mb-4">
-            {simulations.map((sim: SimulationBrief) => (
-              <div
-                key={sim.id}
-                className="flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer transition-all duration-150"
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--wr-text-muted)' }}>
+              Previous Runs
+            </span>
+            {simulations.filter((s: SimulationBrief) => s.status === 'completed').length >= COMPARE_MIN && (
+              <button
+                className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded transition-all duration-150"
                 style={{
-                  background: selectedSimId === sim.id ? 'var(--wr-bg-primary)' : 'transparent',
-                  border: `1px solid ${selectedSimId === sim.id ? 'var(--wr-cyan)' : 'var(--wr-border)'}`,
+                  background: compareMode ? 'rgba(88, 166, 255, 0.15)' : 'transparent',
+                  color: compareMode ? 'var(--wr-cyan)' : 'var(--wr-text-muted)',
+                  border: `1px solid ${compareMode ? 'rgba(88, 166, 255, 0.3)' : 'var(--wr-border)'}`,
+                  cursor: 'pointer',
                 }}
-                onClick={() => setSelectedSimId(selectedSimId === sim.id ? null : sim.id)}
+                onClick={() => {
+                  setCompareMode(!compareMode);
+                  setCompareIds([]);
+                }}
               >
-                <Badge
-                  severity={
-                    sim.status === 'completed'
-                      ? 'low'
-                      : sim.status === 'running'
-                        ? 'info'
-                        : sim.status === 'failed'
-                          ? 'critical'
-                          : 'medium'
-                  }
-                >
-                  {sim.status}
-                </Badge>
-                <span className="text-xs truncate flex-1" style={{ color: 'var(--wr-text-primary)' }}>
-                  {sim.name}
-                </span>
-                <span className="font-mono-numbers text-[10px]" style={{ color: 'var(--wr-text-muted)' }}>
-                  {new Date(sim.created_at).toLocaleDateString()}
-                </span>
-              </div>
-            ))}
+                {compareMode ? 'Cancel' : 'Compare'}
+              </button>
+            )}
           </div>
+          <div className="space-y-1.5 max-h-[140px] overflow-y-auto pr-1 mb-4">
+            {simulations.map((sim: SimulationBrief) => {
+              const isSelected = compareMode ? compareIds.includes(sim.id) : selectedSimId === sim.id;
+              const isCompletedSim = sim.status === 'completed';
+              return (
+                <div
+                  key={sim.id}
+                  className="flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer transition-all duration-150"
+                  style={{
+                    background: isSelected ? 'var(--wr-bg-primary)' : 'transparent',
+                    border: `1px solid ${isSelected ? 'var(--wr-cyan)' : 'var(--wr-border)'}`,
+                    opacity: compareMode && !isCompletedSim ? 0.4 : 1,
+                    pointerEvents: compareMode && !isCompletedSim ? 'none' : 'auto',
+                  }}
+                  onClick={() => {
+                    if (compareMode) {
+                      toggleCompareId(sim.id);
+                    } else {
+                      setSelectedSimId(selectedSimId === sim.id ? null : sim.id);
+                    }
+                  }}
+                >
+                  {compareMode && (
+                    <div
+                      className="w-4 h-4 rounded border flex items-center justify-center flex-shrink-0"
+                      style={{
+                        borderColor: isSelected ? 'var(--wr-cyan)' : 'var(--wr-border)',
+                        background: isSelected ? 'rgba(88, 166, 255, 0.2)' : 'transparent',
+                      }}
+                    >
+                      {isSelected && (
+                        <span style={{ color: 'var(--wr-cyan)', fontSize: 10, lineHeight: 1 }}>&#10003;</span>
+                      )}
+                    </div>
+                  )}
+                  <Badge
+                    severity={
+                      sim.status === 'completed'
+                        ? 'low'
+                        : sim.status === 'running'
+                          ? 'info'
+                          : sim.status === 'failed'
+                            ? 'critical'
+                            : 'medium'
+                    }
+                  >
+                    {sim.status}
+                  </Badge>
+                  <span className="text-xs truncate flex-1" style={{ color: 'var(--wr-text-primary)' }}>
+                    {sim.name}
+                  </span>
+                  <span className="font-mono-numbers text-[10px]" style={{ color: 'var(--wr-text-muted)' }}>
+                    {new Date(sim.created_at).toLocaleDateString()}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Compare button */}
+          {compareMode && (
+            <button
+              className="w-full px-4 py-2 rounded-md text-xs font-semibold uppercase tracking-wider transition-all duration-200 mb-4"
+              style={{
+                background:
+                  compareIds.length >= COMPARE_MIN
+                    ? 'linear-gradient(135deg, rgba(88, 166, 255, 0.2), rgba(88, 166, 255, 0.1))'
+                    : 'var(--wr-bg-primary)',
+                color: compareIds.length >= COMPARE_MIN ? 'var(--wr-cyan)' : 'var(--wr-text-muted)',
+                border: `1px solid ${compareIds.length >= COMPARE_MIN ? 'rgba(88, 166, 255, 0.4)' : 'var(--wr-border)'}`,
+                cursor: compareIds.length >= COMPARE_MIN ? 'pointer' : 'not-allowed',
+                boxShadow: compareIds.length >= COMPARE_MIN ? '0 0 12px rgba(88, 166, 255, 0.15)' : 'none',
+              }}
+              disabled={compareIds.length < COMPARE_MIN}
+              onClick={() => setShowComparison(true)}
+            >
+              Compare {compareIds.length} Scenario{compareIds.length !== 1 ? 's' : ''}
+              {compareIds.length < COMPARE_MIN && ` (select ${COMPARE_MIN - compareIds.length} more)`}
+            </button>
+          )}
         </div>
       )}
 
@@ -278,7 +408,33 @@ export function SimPanel({ className }: { className?: string }) {
             Results: {selectedSim?.name}
           </span>
           <ResultsComparison baseline={baselineMetrics} mitigated={mitigatedMetrics} />
+          <button
+            className="w-full mt-3 px-4 py-2 rounded-md text-xs font-semibold uppercase tracking-wider transition-all duration-200"
+            style={{
+              background: 'linear-gradient(135deg, rgba(188, 140, 255, 0.15), rgba(188, 140, 255, 0.05))',
+              color: 'var(--wr-purple)',
+              border: '1px solid rgba(188, 140, 255, 0.3)',
+              cursor: 'pointer',
+            }}
+            onClick={() => setShowBrief(true)}
+          >
+            Generate Executive Brief
+          </button>
         </div>
+      )}
+
+      {showBrief && selectedSimId && (
+        <ExecutiveSummaryModal
+          simulationId={selectedSimId}
+          onClose={() => setShowBrief(false)}
+        />
+      )}
+
+      {showComparison && compareIds.length >= COMPARE_MIN && (
+        <ScenarioComparison
+          simulationIds={compareIds}
+          onClose={() => setShowComparison(false)}
+        />
       )}
     </Card>
   );

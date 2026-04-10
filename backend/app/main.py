@@ -41,6 +41,7 @@ def create_app() -> FastAPI:
     from app.routers import (
         agents,
         dashboard,
+        demo,
         demand,
         orders,
         risks,
@@ -51,6 +52,7 @@ def create_app() -> FastAPI:
     )
 
     application.include_router(dashboard.router)
+    application.include_router(demo.router)
     application.include_router(suppliers.router)
     application.include_router(orders.router)
     application.include_router(risks.router)

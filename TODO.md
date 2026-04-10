@@ -12,13 +12,13 @@
 
 - [x] **Decision audit trail (full reasoning)** — AgentLog expands on click to show full reasoning, parsed parameters table, cost/time impact, affected orders, trigger event, reviewer notes, and timeline. Lazy-loads detail from API.
 - [x] **Agent-to-agent handoff visibility** — Show in the UI when the orchestrator delegates to risk monitor → simulation → mitigation agents. Animated flow or timeline view of the agent pipeline.
-- [ ] **Scenario builder UI** — Let users compose custom disruption scenarios (pick affected routes/suppliers, set severity, duration) instead of only using presets. Wire to the Monte Carlo engine.
+- [x] **Scenario builder UI** — Let users compose custom disruption scenarios (pick affected routes/suppliers, set severity, duration) instead of only using presets. Wire to the Monte Carlo engine.
 
 ## Tier 3 — Portfolio Showstoppers
 
-- [ ] **Demo mode / guided walkthrough** — A "Demo" button that auto-plays a scenario end-to-end: triggers a disruption, risk feed lights up, agents deliberate in chat, simulation runs, mitigation gets proposed — all animated in real time. Killer for portfolio walkthroughs and interviews.
-- [ ] **Executive summary generation** — After a simulation completes, generate a one-page executive brief (PDF or styled HTML) summarizing the disruption, Monte Carlo results, agent recommendations, and estimated ROI of mitigation. Shows "boardroom-ready" output.
-- [ ] **Multi-scenario comparison** — Run 2-3 scenarios side-by-side and compare outcomes. Visualization showing overlapping cost/delay distributions.
+- [x] **Demo mode / guided walkthrough** — A "Demo" button that auto-plays a scenario end-to-end: triggers a disruption, risk feed lights up, agents deliberate in chat, simulation runs, mitigation gets proposed — all animated in real time. Killer for portfolio walkthroughs and interviews.
+- [x] **Executive summary generation** — After a simulation completes, generate a one-page executive brief (PDF or styled HTML) summarizing the disruption, Monte Carlo results, agent recommendations, and estimated ROI of mitigation. Shows "boardroom-ready" output.
+- [x] **Multi-scenario comparison** — Run 2-3 scenarios side-by-side and compare outcomes. Visualization showing overlapping cost/delay distributions.
 
 ## Completed
 

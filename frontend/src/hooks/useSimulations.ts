@@ -1,6 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../lib/api';
-import type { Simulation, SimulationBrief } from '../types/api';
+import type {
+  ExecutiveSummary,
+  Simulation,
+  SimulationBrief,
+  SimulationCompareResponse,
+} from '../types/api';
 
 export function useSimulations() {
   return useQuery({
@@ -28,6 +33,30 @@ interface RunSimulationParams {
   description?: string;
   scenario_params: Record<string, unknown>;
   iterations?: number;
+}
+
+export function useExecutiveSummary(simId: string | null) {
+  return useQuery({
+    queryKey: ['executive-summary', simId],
+    queryFn: () =>
+      api.get<ExecutiveSummary>(`/api/v1/simulations/${simId}/executive-summary`).then((r) => r.data),
+    enabled: !!simId,
+    staleTime: 5 * 60_000,
+  });
+}
+
+export function useCompareSimulations(simulationIds: string[]) {
+  return useQuery({
+    queryKey: ['simulations', 'compare', simulationIds],
+    queryFn: () =>
+      api
+        .post<SimulationCompareResponse>('/api/v1/simulations/compare', {
+          simulation_ids: simulationIds,
+        })
+        .then((r) => r.data),
+    enabled: simulationIds.length >= 2,
+    staleTime: 60_000,
+  });
 }
 
 export function useRunSimulation() {

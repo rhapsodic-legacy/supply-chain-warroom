@@ -12,7 +12,15 @@ from app.schemas.order import OrderBrief, OrderResponse
 from app.schemas.product import ProductBrief, ProductResponse
 from app.schemas.risk import RiskEventCreate, RiskEventImpactResponse, RiskEventResponse
 from app.schemas.route import ShippingRouteBrief, ShippingRouteResponse
-from app.schemas.simulation import SimulationBrief, SimulationCreate, SimulationResponse
+from app.schemas.simulation import (
+    ExecutiveSummaryResponse,
+    ExecutiveSummarySection,
+    SimulationBrief,
+    SimulationCompareRequest,
+    SimulationCompareResponse,
+    SimulationCreate,
+    SimulationResponse,
+)
 from app.schemas.supplier import SupplierBrief, SupplierCreate, SupplierResponse
 
 __all__ = [
@@ -47,6 +55,10 @@ __all__ = [
     "SimulationCreate",
     "SimulationBrief",
     "SimulationResponse",
+    "SimulationCompareRequest",
+    "SimulationCompareResponse",
+    "ExecutiveSummarySection",
+    "ExecutiveSummaryResponse",
     # Dashboard
     "DashboardOverview",
     "SupplyHealthItem",

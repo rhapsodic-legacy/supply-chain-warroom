@@ -211,6 +211,25 @@ export interface SimulationBrief {
   created_at: string;
 }
 
+/* ─── Simulation Comparison ─── */
+export interface HistogramData {
+  bin_edges: number[];
+  counts: number[];
+}
+
+export interface SimulationCompareItem {
+  id: string;
+  name: string;
+  status: string;
+  baseline_metrics: string | null;
+  mitigated_metrics: string | null;
+  comparison: string | null;
+}
+
+export interface SimulationCompareResponse {
+  simulations: SimulationCompareItem[];
+}
+
 /* ─── Dashboard ─── */
 export interface DashboardOverview {
   total_orders: number;
@@ -283,9 +302,35 @@ export interface AgentHandoffSession {
   total_duration_ms: number | null;
 }
 
+/* ─── Executive Summary ─── */
+export interface ExecutiveSummarySection {
+  title: string;
+  content: string;
+}
+
+export interface ExecutiveSummary {
+  simulation_id: string;
+  simulation_name: string;
+  generated_at: string;
+  llm_tier: 'claude' | 'gemma' | 'template';
+  sections: Record<string, ExecutiveSummarySection>;
+  raw_metrics: {
+    baseline: Record<string, number>;
+    mitigated: Record<string, number>;
+    comparison: Record<string, number>;
+    roi: {
+      mitigation_cost: number;
+      avoided_loss: number;
+      roi_pct: number;
+      payback_days: number | null;
+      revenue_at_risk_per_day: number;
+    };
+  };
+}
+
 /* ─── SSE Events ─── */
 export interface StreamEvent {
-  type: 'risk_update' | 'order_update' | 'agent_action' | 'agent_handoff' | 'supply_alert' | 'heartbeat';
+  type: 'risk_update' | 'order_update' | 'agent_action' | 'agent_handoff' | 'supply_alert' | 'demo_step' | 'heartbeat';
   data: Record<string, unknown>;
   timestamp: string;
 }

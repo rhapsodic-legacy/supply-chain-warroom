@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useDashboardStore } from '../stores/dashboardStore';
+import { useDemoStore } from '../stores/demoStore';
 import type { StreamEvent, Notification } from '../types/api';
 
 let idCounter = 0;
@@ -95,6 +96,18 @@ function handleEvent(
         read: false,
       });
       break;
+
+    case 'demo_step': {
+      const { setStep } = useDemoStore.getState();
+      setStep(
+        event.data.step as string,
+        (event.data.panel as string) || null,
+        (event.data.step_index as number) ?? 0,
+        (event.data.total_steps as number) ?? 9,
+        event.data,
+      );
+      break;
+    }
 
     case 'heartbeat':
       // no-op

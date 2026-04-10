@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { Sidebar } from './Sidebar';
 import { StatusBar } from './StatusBar';
 import { useDashboardStore } from '../../stores/dashboardStore';
+import { useDemoStore } from '../../stores/demoStore';
 import { GlobalMap } from '../panels/GlobalMap';
 import { RiskFeed } from '../panels/RiskFeed';
 import { SupplierGrid } from '../panels/SupplierGrid';
@@ -11,6 +12,9 @@ import { AgentLog } from '../panels/AgentLog';
 import { AgentPipeline } from '../panels/AgentPipeline';
 import { SimPanel } from '../panels/SimPanel';
 import { ChatPanel } from '../panels/ChatPanel';
+import { DemoButton } from '../demo/DemoButton';
+import { DemoProgress } from '../demo/DemoProgress';
+import { DemoOverlay } from '../demo/DemoOverlay';
 
 type Tab = 'pipeline' | 'agents' | 'chat';
 
@@ -74,7 +78,12 @@ const SECTION_IDS: Record<string, string> = {
 export function WarRoomShell() {
   const sidebarOpen = useDashboardStore((s) => s.sidebarOpen);
   const toggleSidebar = useDashboardStore((s) => s.toggleSidebar);
+  const highlightedPanel = useDemoStore((s) => s.highlightedPanel);
   const mainRef = useRef<HTMLElement>(null);
+
+  /** Apply highlight class to sections targeted by the demo */
+  const hl = (sectionId: string) =>
+    highlightedPanel === sectionId ? 'demo-highlight' : '';
 
   // Override setActivePanel to also scroll to the section
   const originalSetActive = useDashboardStore.getState().setActivePanel;
@@ -134,6 +143,7 @@ export function WarRoomShell() {
           </div>
         </div>
         <div className="flex items-center gap-4">
+          <DemoButton />
           <div className="flex items-center gap-2">
             <span className="inline-block w-1.5 h-1.5 rounded-full pulse-dot" style={{ background: 'var(--wr-green)' }} />
             <span className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--wr-text-muted)' }}>
@@ -155,9 +165,11 @@ export function WarRoomShell() {
           Panels auto-size to their content. The main area scrolls.
           This guarantees no panel is ever clipped regardless of content.
         */}
-        <main ref={mainRef} className="flex-1 min-w-0 p-2 overflow-y-auto">
+        <main ref={mainRef} className="flex-1 min-w-0 p-2 overflow-y-auto relative">
+          <DemoProgress />
+
           {/* Row 1: Map + Agent panel */}
-          <div id="section-map" className="grid gap-2 mb-2" style={{ gridTemplateColumns: '1fr 340px' }}>
+          <div id="section-map" className={`grid gap-2 mb-2 ${hl('section-map')}`} style={{ gridTemplateColumns: '1fr 340px' }}>
             <div style={{ minHeight: '380px' }}>
               <GlobalMap className="h-full" />
             </div>
@@ -170,6 +182,7 @@ export function WarRoomShell() {
                 borderRadius: 'var(--wr-radius-lg)',
               }}
               id="section-agents"
+              className={hl('section-agents')}
             >
               <AgentChatTabs className="h-full" />
             </div>
@@ -177,26 +190,28 @@ export function WarRoomShell() {
 
           {/* Row 2: Risk + Suppliers */}
           <div className="grid gap-2 mb-2 items-start" style={{ gridTemplateColumns: '1fr 1fr' }}>
-            <div id="section-risk">
+            <div id="section-risk" className={hl('section-risk')}>
               <RiskFeed />
             </div>
-            <div id="section-suppliers">
+            <div id="section-suppliers" className={hl('section-suppliers')}>
               <SupplierGrid />
             </div>
           </div>
 
           {/* Row 3: Demand + Orders + Simulation */}
           <div className="grid gap-2 mb-2 items-start" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
-            <div id="section-demand">
+            <div id="section-demand" className={hl('section-demand')}>
               <DemandChart />
             </div>
-            <div id="section-orders">
+            <div id="section-orders" className={hl('section-orders')}>
               <OrderTracker />
             </div>
-            <div id="section-sim">
+            <div id="section-sim" className={hl('section-sim')}>
               <SimPanel />
             </div>
           </div>
+
+          <DemoOverlay />
         </main>
       </div>
 

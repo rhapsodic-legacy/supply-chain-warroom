@@ -53,6 +53,19 @@ def _format_results(result: SimulationResult) -> dict:
         "delay_p95": result.delay_distribution.p95,
         "stockout_mean": result.stockout_distribution.mean,
     }
+    histograms = {}
+    if result.cost_histogram:
+        histograms["cost"] = {
+            "bin_edges": result.cost_histogram.bin_edges,
+            "counts": result.cost_histogram.counts,
+        }
+    if result.delay_histogram:
+        histograms["delay"] = {
+            "bin_edges": result.delay_histogram.bin_edges,
+            "counts": result.delay_histogram.counts,
+        }
+    if histograms:
+        comparison["histograms"] = histograms
     return {"baseline": baseline, "mitigated": mitigated, "comparison": comparison}
 
 
