@@ -20,6 +20,18 @@
 - [x] **Executive summary generation** — After a simulation completes, generate a one-page executive brief (PDF or styled HTML) summarizing the disruption, Monte Carlo results, agent recommendations, and estimated ROI of mitigation. Shows "boardroom-ready" output.
 - [x] **Multi-scenario comparison** — Run 2-3 scenarios side-by-side and compare outcomes. Visualization showing overlapping cost/delay distributions.
 
+## Tier 4 — Deepen Technical Impressiveness
+
+- [ ] **WebSocket upgrade** — Replace SSE with WebSockets for bidirectional real-time (shows you know the tradeoffs). Graceful fallback to SSE for environments that don't support WS.
+- [ ] **Agent memory / learning** — Agents reference past decisions to improve recommendations over time. Store learned patterns in a memory layer, surface "last time this happened, we..." context.
+- [ ] **Alerting rules engine** — Let users define custom alert thresholds (e.g. "notify me when any supplier reliability drops below 0.7") that trigger agent analysis automatically.
+
+## Tier 5 — Ship & Present
+
+- [ ] **Capture README screenshots/GIFs** — Take dashboard, simulation, comparison, executive summary, agent pipeline screenshots + demo mode GIF. See docs/assets/SCREENSHOTS.md for guide.
+- [ ] **Live deployment** — Deploy to Railway (backend + Postgres) and Vercel (frontend) so interviewers can click a link.
+- [ ] **Video walkthrough** — 2-minute Loom walking through demo mode end-to-end for portfolio.
+
 ## Completed
 
 - [x] Full backend: FastAPI, DB models, seed data, agent definitions

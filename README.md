@@ -1,47 +1,135 @@
 # Supply Chain War Room    
 
-**An enterprise-grade, multi-agent AI system for supply chain risk monitoring, simulation, and autonomous decision-making.**
+<h1 align="center">Supply Chain War Room</h1>
 
-Built with the Claude Agent SDK, this system demonstrates how agentic AI can continuously monitor a global supply chain, detect emerging risks, run Monte Carlo simulations of disruption scenarios, propose cost-optimized mitigation strategies, and execute decisions — all through a command-center dashboard with a conversational AI interface.
+<p align="center">
+  <strong>Multi-agent AI system for real-time supply chain risk monitoring, Monte Carlo simulation, and autonomous decision-making.</strong>
+</p>
 
-> This is literally what companies pay seven figures to Accenture to build.
+<p align="center">
+  <a href="#quick-start">Quick Start</a> &middot;
+  <a href="#features">Features</a> &middot;
+  <a href="#architecture">Architecture</a> &middot;
+  <a href="#demo-mode">Demo Mode</a> &middot;
+  <a href="#tech-stack">Tech Stack</a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/python-3.12+-blue?logo=python&logoColor=white" alt="Python" />
+  <img src="https://img.shields.io/badge/react-19-61DAFB?logo=react&logoColor=white" alt="React" />
+  <img src="https://img.shields.io/badge/fastapi-0.115-009688?logo=fastapi&logoColor=white" alt="FastAPI" />
+  <img src="https://img.shields.io/badge/claude_sdk-agents-7C3AED?logo=anthropic&logoColor=white" alt="Claude Agent SDK" />
+  <img src="https://github.com/rhapsodic-legacy/supply-chain-warroom/actions/workflows/ci.yml/badge.svg" alt="CI" />
+</p>
 
 ---
 
-## What It Does
+> Built with the Claude Agent SDK, five specialized AI agents collaborate to monitor a global supply chain, detect emerging risks, run Monte Carlo simulations, propose cost-optimized mitigations, and execute decisions -- all through a command-center dashboard with conversational AI.
 
-- **Real-time Risk Monitoring** — AI agents continuously scan for supply chain disruptions: port closures, supplier delays, demand spikes, geopolitical events
-- **Monte Carlo Simulation** — Run 10,000-iteration what-if scenarios ("What if the Suez Canal closes for 3 weeks?") with statistically valid results (p50/p90/p95/p99)
-- **AI-Powered Strategy** — Agents generate mitigation plans with cost-benefit analysis, alternative supplier recommendations, and rerouting options
-- **Autonomous Execution** — With human approval, agents reroute orders, trigger safety stock purchases, and update supplier status — all logged to an audit trail
-- **Queryable Reasoning** — Ask "Why did you reroute order PO-2025-0042?" and get the full chain of agent reasoning
-- **Command Center Dashboard** — Dark-themed war room UI with world map, risk feed, supplier health grid, and real-time agent decision stream
+---
+
+## Screenshots
+
+<p align="center">
+  <img src="docs/assets/dashboard-overview.png" alt="War Room Dashboard" width="800" />
+  <br />
+  <em>Command center with live risk feed, supplier health grid, agent decisions, and global map</em>
+</p>
+
+<details>
+<summary><strong>Simulation Lab & Scenario Comparison</strong></summary>
+<br />
+<p align="center">
+  <img src="docs/assets/simulation-lab.png" alt="Simulation Lab" width="700" />
+  <br /><br />
+  <img src="docs/assets/scenario-comparison.png" alt="Multi-Scenario Comparison" width="700" />
+  <br />
+  <em>Run preset or custom scenarios, then compare 2-5 results side-by-side with overlapping distributions</em>
+</p>
+</details>
+
+<details>
+<summary><strong>Executive Summary & Agent Pipeline</strong></summary>
+<br />
+<p align="center">
+  <img src="docs/assets/executive-summary.png" alt="Executive Summary" width="700" />
+  <br /><br />
+  <img src="docs/assets/agent-pipeline.png" alt="Agent Handoff Pipeline" width="700" />
+  <br />
+  <em>Boardroom-ready briefs with ROI analysis, and visual agent-to-agent handoff timeline</em>
+</p>
+</details>
+
+<details>
+<summary><strong>Demo Mode Walkthrough</strong></summary>
+<br />
+<p align="center">
+  <img src="docs/assets/demo-mode.gif" alt="Demo Mode" width="700" />
+  <br />
+  <em>One-click guided walkthrough: triggers disruption, agents deliberate, simulation runs, mitigation proposed</em>
+</p>
+</details>
+
+---
+
+## Features
+
+### Core Intelligence
+
+| Feature | Description |
+|---------|-------------|
+| **Real-time Risk Monitoring** | AI agents scan for disruptions -- port closures, supplier delays, demand spikes, geopolitical events. GDELT news + Open-Meteo weather ingestion with relevance filtering. |
+| **Monte Carlo Simulation** | 10,000-iteration what-if scenarios with full statistical output (p50/p90/p95/p99). Real NumPy computation, not LLM-generated numbers. |
+| **Custom Scenario Builder** | Compose disruptions: route closures, capacity reductions, node shutdowns, demand spikes, cost surges. Set severity, duration, and affected regions. |
+| **Multi-Scenario Comparison** | Run 2-5 scenarios and compare side-by-side: ranked metrics table, radar chart risk profiles, overlapping cost/delay distribution curves. |
+| **AI-Powered Strategy** | Agents generate mitigation plans with cost-benefit analysis, alternative suppliers, and rerouting options. |
+| **Executive Summary** | After any simulation, generate a boardroom-ready brief with disruption analysis, Monte Carlo results, agent recommendations, and ROI calculations. 3-tier LLM fallback (Claude > Gemma > template). |
+
+### Agentic Capabilities
+
+| Feature | Description |
+|---------|-------------|
+| **Human-in-the-Loop Approval** | Execution agent requires explicit approval before acting. Approve/reject with glow effects and state machine validation. |
+| **Decision Audit Trail** | Every agent action logged with full reasoning, confidence score, cost/time impact, affected orders, and timeline. Expand any decision to see the complete chain. |
+| **Agent Handoff Visibility** | Watch the orchestrator delegate to specialists in real-time. Animated pipeline view shows risk monitor -> simulation -> strategy -> execution flow. |
+| **Conversational Interface** | Ask agents anything: "Why did you reroute PO-2025-0042?" and get the full reasoning chain. |
+
+### Demo & Presentation
+
+| Feature | Description |
+|---------|-------------|
+| **Demo Mode** | One-click guided walkthrough auto-plays a scenario end-to-end: triggers disruption, risk feed lights up, agents deliberate, simulation runs, mitigation gets proposed. |
+| **12-Panel Dashboard** | World map, risk feed, supplier grid, order tracker, demand chart, agent log, simulation lab, chat panel, agent pipeline, scenario builder, executive summary, scenario comparison. |
 
 ---
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                   Frontend (React)                       │
-│  GlobalMap │ RiskFeed │ Suppliers │ Orders │ Chat Panel  │
-│  DemandChart │ AgentLog │ SimPanel │ StatusBar           │
-└──────────────────────────────────────┬──────────────────┘
-                                       │ SSE + HTTP
-┌──────────────────────────────────────┴──────────────────┐
-│                 Backend (FastAPI)                         │
-│  REST API ──── Agent Bridge (Claude SDK) ──── SSE Stream │
-│       │              │                                   │
-│   Services      Orchestrator Agent                       │
-│       │         ┌────┴────────────────────┐              │
-│   PostgreSQL    │ Risk    │ Simulation    │              │
-│   / SQLite      │ Monitor │ Agent         │              │
-│                 │ Strategy│ Execution     │              │
-│                 │ Agent   │ Agent         │              │
-│                 └─────────┴───────────────┘              │
-│                        │                                 │
-│              Monte Carlo Engine (NumPy)                   │
-└──────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│                      Frontend (React + TypeScript)                │
+│                                                                  │
+│  GlobalMap  RiskFeed  SupplierGrid  OrderTracker  DemandChart    │
+│  AgentLog  SimPanel  ChatPanel  AgentPipeline  ScenarioBuilder   │
+│  ExecutiveSummary  ScenarioComparison  DemoOverlay               │
+└──────────────────────────────┬───────────────────────────────────┘
+                               │ SSE (real-time) + REST API
+┌──────────────────────────────┴───────────────────────────────────┐
+│                      Backend (FastAPI)                            │
+│                                                                  │
+│  REST Endpoints ─── Agent Bridge (Claude SDK) ─── SSE Broadcast  │
+│        │                    │                                    │
+│    Services            Orchestrator                              │
+│        │           ┌───────┴──────────────────┐                  │
+│   PostgreSQL       │  Risk     Simulation     │                  │
+│   (SQLite dev)     │  Monitor  Agent          │                  │
+│                    │  Strategy  Execution      │                  │
+│                    │  Agent     Agent          │                  │
+│                    └──────────┬───────────────┘                  │
+│                               │                                  │
+│                    Monte Carlo Engine (NumPy)                     │
+│                    Supply Chain Graph Model                       │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
 ### Agent Hierarchy
@@ -49,10 +137,10 @@ Built with the Claude Agent SDK, this system demonstrates how agentic AI can con
 | Agent | Role | Key Tools |
 |-------|------|-----------|
 | **Orchestrator** | Routes queries to specialists, chains multi-step workflows | `get_war_room_context`, `query_decision_log` |
-| **Risk Monitor** | Detects and scores supply chain risks | `query_risk_events`, `score_suppliers`, `create_alert` |
-| **Simulation** | Runs what-if Monte Carlo scenarios | `run_monte_carlo`, `list_preset_scenarios` |
-| **Strategy** | Generates mitigation plans with cost analysis | `query_alternatives`, `generate_plan`, `cost_analysis` |
-| **Execution** | Executes approved actions with full audit trail | `reroute_order`, `trigger_safety_stock`, `send_webhook` |
+| **Risk Monitor** | Detects and scores supply chain risks across 5 categories | `query_risk_events`, `score_suppliers`, `create_alert`, `fetch_risk_signals` |
+| **Simulation** | Runs what-if Monte Carlo scenarios, interprets distributions | `run_monte_carlo`, `list_preset_scenarios`, `query_network_stats` |
+| **Strategy** | Generates costed mitigation plans with alternatives | `query_inventory_status`, `query_alternative_suppliers`, `generate_mitigation_plan` |
+| **Execution** | Executes approved actions with full audit trail | `reroute_order`, `trigger_safety_stock`, `update_supplier_status` |
 
 ---
 
@@ -96,6 +184,21 @@ Open http://localhost:5173
 
 ---
 
+## Demo Mode
+
+Click the **Demo** button in the top bar to launch a guided walkthrough that auto-plays a complete disruption scenario:
+
+1. A Suez Canal closure event is triggered
+2. Risk feed lights up with cascading impacts
+3. Agents deliberate and propose mitigations in the chat
+4. Monte Carlo simulation runs with 10,000 iterations
+5. Results appear with cost/delay distributions
+6. Mitigation strategy is proposed for human approval
+
+This is designed for portfolio walkthroughs and interviews -- it shows the full system working end-to-end in under 2 minutes.
+
+---
+
 ## Try These Prompts
 
 Once running, open the Chat Panel and try:
@@ -117,27 +220,16 @@ Once running, open the Chat Panel and try:
 
 | Layer | Technology |
 |-------|-----------|
-| **AI Agents** | Claude Agent SDK (Anthropic), Claude Sonnet |
-| **Backend** | Python 3.12, FastAPI, SQLAlchemy async |
-| **Frontend** | React 18, TypeScript, Vite, Tailwind CSS, Shadcn/ui |
+| **AI Agents** | Claude Agent SDK, Claude Sonnet |
+| **Backend** | Python 3.12, FastAPI, SQLAlchemy async, Pydantic v2 |
+| **Frontend** | React 19, TypeScript, Vite, Tailwind CSS |
 | **Simulation** | NumPy Monte Carlo engine (10K iterations < 0.2s) |
-| **Charts** | Recharts, react-simple-maps |
-| **Real-time** | Server-Sent Events (SSE) |
-| **Database** | PostgreSQL (production) / SQLite (development) |
-| **State** | Zustand + TanStack Query |
-
----
-
-## Synthetic Data
-
-The system ships with a deterministic synthetic data generator — no external APIs needed:
-
-- **20 suppliers** across 5 regions (East Asia, South Asia, Europe, Americas)
-- **25 products** across 4 categories (electronics, automotive, pharma, consumer goods)
-- **36 shipping routes** covering major global trade lanes
-- **300 orders** with realistic status distribution and delays
-- **3,900 demand signals** with seasonality, trends, and anomalies
-- **23 risk events** including 3 vivid, currently active scenarios
+| **Charts** | Recharts (bar, area, radar), react-simple-maps |
+| **Real-time** | Server-Sent Events (SSE) with broadcast event bus |
+| **Database** | PostgreSQL 16 (production) / SQLite (development) |
+| **State** | Zustand + TanStack React Query |
+| **Testing** | pytest + pytest-cov (backend), Vitest + Testing Library (frontend) |
+| **CI** | GitHub Actions: lint, type-check, test, build |
 
 ---
 
@@ -145,68 +237,110 @@ The system ships with a deterministic synthetic data generator — no external A
 
 The Monte Carlo engine models the supply chain as a directed weighted graph:
 
-1. **Baseline** — Normal operations with stochastic lead times (log-normal distribution)
-2. **Disruption** — Apply scenario (route closure, capacity reduction, demand spike)
-3. **10,000 iterations** — Sample lead times, compute flow, track cost/delay/fill rate
-4. **Statistical output** — p50, p90, p95, p99 distributions for all metrics
-5. **Agent interpretation** — The AI analyzes results and recommends actions
+```
+Supplier ──→ Origin Port ──→ Destination Port ──→ Customer
+         ocean/air/rail        cost, capacity,
+                               reliability, lead time
+```
 
-The math is real NumPy computation — not LLM-generated numbers.
+1. **Baseline** -- Normal operations with stochastic lead times (log-normal distribution)
+2. **Disruption** -- Apply scenario effects (route closure, capacity reduction, node shutdown, demand spike, cost surge)
+3. **10,000 iterations** -- Vectorised NumPy sampling of lead times, flow, cost, fill rate per path
+4. **Statistical output** -- Full distribution stats (mean, std, p50, p90, p95, p99, min, max) + histogram bins
+5. **Agent interpretation** -- AI analyzes results and recommends actions with cost-benefit analysis
 
----
-
-## Decision Audit Trail
-
-Every agent action is logged to the `agent_decisions` table with:
-- Which agent made the decision
-- What triggered it (risk event, user request, simulation result)
-- Full reasoning chain
-- Confidence score
-- Cost and time impact estimates
-- Execution status and outcome
-
-This makes every decision fully traceable and queryable.
+The math is real NumPy computation -- not LLM-generated numbers.
 
 ---
 
-## Deployment
+## Synthetic Data
 
-### Frontend → Vercel
+The system ships with a deterministic synthetic data generator -- no external APIs needed:
 
-1. Import the repo at [vercel.com/new](https://vercel.com/new)
-2. Set **Root Directory** to `frontend`
-3. Add environment variable: `VITE_API_URL` = your Railway backend URL
-4. Deploy
-
-### Backend → Railway
-
-1. Create a new project at [railway.app](https://railway.app)
-2. Connect the GitHub repo
-3. Set **Root Directory** to `backend`
-4. Add environment variables: `ANTHROPIC_API_KEY`, `DATABASE_URL` (Railway Postgres addon), `FRONTEND_URL`
-5. Deploy — the `railway.toml` handles the rest
+- **20 suppliers** across 5 regions (East Asia, South Asia, Europe, Americas)
+- **25 products** across 4 categories (electronics, automotive, pharma, consumer goods)
+- **36 shipping routes** covering major global trade lanes
+- **300+ orders** with realistic status distribution and delays
+- **3,900+ demand signals** with seasonality, trends, and anomalies
+- **23 risk events** including active geopolitical, weather, and logistics scenarios
 
 ---
 
 ## Testing
 
 ```bash
+# Backend (11 test files, 3,200+ lines)
 cd backend && source .venv/bin/activate
-python3 -m pytest tests/ -v    # 56 tests
+python3 -m pytest tests/ -v --cov=app
+
+# Frontend (11 test files)
+cd frontend && npm test
 ```
+
+CI runs on every push: ruff lint/format, pytest with coverage, TypeScript type-check, Vitest, production build.
+
+---
+
+## Project Structure
+
+```
+supply_room/
+├── backend/
+│   ├── app/
+│   │   ├── agents/          # 5 Claude Agent SDK agents + tool implementations
+│   │   ├── models/          # 11 SQLAlchemy ORM models
+│   │   ├── routers/         # FastAPI route modules
+│   │   ├── schemas/         # Pydantic v2 request/response schemas
+│   │   ├── services/        # Business logic layer
+│   │   ├── simulation/      # Monte Carlo engine, network graph, scenarios
+│   │   └── seed/            # Synthetic data generator
+│   └── tests/               # pytest suite with mock Anthropic SDK
+├── frontend/
+│   └── src/
+│       ├── components/
+│       │   ├── layout/      # WarRoomShell, Sidebar, StatusBar
+│       │   ├── panels/      # 12 dashboard widgets
+│       │   ├── shared/      # Button, Card, Badge, Modal, Spinner
+│       │   └── demo/        # Demo mode overlay + progress
+│       ├── hooks/           # TanStack Query data hooks
+│       ├── stores/          # Zustand state management
+│       ├── types/           # TypeScript interfaces (derived from backend)
+│       └── styles/          # Dark theme CSS with glow effects
+├── docs/                    # Architecture, dev log, Claude Code showcase
+└── docker-compose.yml       # Full-stack deployment (PostgreSQL + API + SPA)
+```
+
+---
+
+## Deployment
+
+### Docker Compose (self-hosted)
+
+```bash
+docker-compose up -d
+```
+
+### Cloud Deployment
+
+| Service | Platform | Notes |
+|---------|----------|-------|
+| **Frontend** | Vercel | Set root to `frontend`, add `VITE_API_URL` env var |
+| **Backend** | Railway | Set root to `backend`, add `ANTHROPIC_API_KEY` + Railway Postgres |
+| **Database** | Railway Postgres | Auto-provisioned as addon |
 
 ---
 
 ## Built With Claude Code
 
-This project was built using [Claude Code](https://claude.ai/code) with:
+This project was built entirely using [Claude Code](https://claude.ai/code):
 
-- **Hierarchical CLAUDE.md files** — Root + backend + frontend + agents conventions
-- **6 custom slash commands** — `/add-agent`, `/gen-scenario`, `/add-dashboard-widget`, `/run-simulation`, `/dev-log`, `/sync-types`
-- **Automated hooks** — Auto-format on save (ruff for Python, prettier for TypeScript)
-- **Parallel subagents** — Frontend and backend built simultaneously
+- **Hierarchical CLAUDE.md** -- Root + backend + frontend convention files
+- **6 custom slash commands** -- `/add-agent`, `/gen-scenario`, `/add-dashboard-widget`, `/run-simulation`, `/dev-log`, `/sync-types`
+- **Automated hooks** -- Auto-format on save (ruff for Python, prettier for TypeScript)
+- **Parallel subagents** -- Frontend and backend built simultaneously
+- **Plan mode** -- Architecture design before implementation
 
-See [docs/CLAUDE_CODE_SHOWCASE.md](docs/CLAUDE_CODE_SHOWCASE.md) for the full development workflow documentation.
+See [docs/CLAUDE_CODE_SHOWCASE.md](docs/CLAUDE_CODE_SHOWCASE.md) for the full development workflow.
 
 ---
 
