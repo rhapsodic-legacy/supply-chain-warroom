@@ -1,4 +1,4 @@
-# Supply Chain War Room  
+# Supply Chain War Room   
 
 **An enterprise-grade, multi-agent AI system for supply chain risk monitoring, simulation, and autonomous decision-making.**
 
