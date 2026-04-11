@@ -1,4 +1,6 @@
-# Supply Chain War Room    
+<p align="center">
+  <img src="docs/assets/war-room-banner.svg" alt="Supply Chain War Room" width="800" />
+</p>
 
 <h1 align="center">Supply Chain War Room</h1>
 
