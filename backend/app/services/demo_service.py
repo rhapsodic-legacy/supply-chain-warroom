@@ -18,7 +18,6 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-import os
 import uuid
 from datetime import datetime, timedelta, timezone
 
@@ -53,17 +52,18 @@ DEMO_STEPS = [
 ]
 
 
-async def _publish_step(
-    step: str, panel: str | None = None, **extra: object
-) -> None:
+async def _publish_step(step: str, panel: str | None = None, **extra: object) -> None:
     """Publish a demo_step SSE event."""
-    await publish_event("demo_step", {
-        "step": step,
-        "panel": panel,
-        "step_index": DEMO_STEPS.index(step) if step in DEMO_STEPS else -1,
-        "total_steps": len(DEMO_STEPS),
-        **extra,
-    })
+    await publish_event(
+        "demo_step",
+        {
+            "step": step,
+            "panel": panel,
+            "step_index": DEMO_STEPS.index(step) if step in DEMO_STEPS else -1,
+            "total_steps": len(DEMO_STEPS),
+            **extra,
+        },
+    )
 
 
 async def _is_cancelled(demo_id: str) -> bool:
@@ -153,16 +153,19 @@ async def _run_local_agent_pipeline(
         await db.flush()
         created["handoff_ids"].append(handoff.id)
 
-        await publish_event("agent_handoff", {
-            "handoff_id": handoff.id,
-            "session_id": session_id,
-            "sequence": seq,
-            "from_agent": "orchestrator",
-            "to_agent": agent,
-            "query": handoff.query,
-            "status": "running",
-            "source": agent_source,
-        })
+        await publish_event(
+            "agent_handoff",
+            {
+                "handoff_id": handoff.id,
+                "session_id": session_id,
+                "sequence": seq,
+                "from_agent": "orchestrator",
+                "to_agent": agent,
+                "query": handoff.query,
+                "status": "running",
+                "source": agent_source,
+            },
+        )
 
         # Generate response
         start = asyncio.get_event_loop().time()
@@ -184,16 +187,19 @@ async def _run_local_agent_pipeline(
         handoff.result_summary = summary[:300]
         await db.flush()
 
-        await publish_event("agent_handoff", {
-            "handoff_id": handoff.id,
-            "session_id": session_id,
-            "sequence": seq,
-            "from_agent": "orchestrator",
-            "to_agent": agent,
-            "status": "completed",
-            "duration_ms": elapsed_ms,
-            "source": agent_source,
-        })
+        await publish_event(
+            "agent_handoff",
+            {
+                "handoff_id": handoff.id,
+                "session_id": session_id,
+                "sequence": seq,
+                "from_agent": "orchestrator",
+                "to_agent": agent,
+                "status": "completed",
+                "duration_ms": elapsed_ms,
+                "source": agent_source,
+            },
+        )
 
     # Generate mitigation reasoning
     if use_gemma:
@@ -239,13 +245,15 @@ async def _run_local_agent_pipeline(
         cost_impact=-1_040_000.0,
         time_impact_days=-5,
         affected_orders=8,
-        parameters=json.dumps({
-            "air_freight_cost": 340_000,
-            "dual_source_setup": 180_000,
-            "safety_stock_cost": 520_000,
-            "protected_revenue_per_day": 2_400_000,
-            "agent_source": agent_source,
-        }),
+        parameters=json.dumps(
+            {
+                "air_freight_cost": 340_000,
+                "dual_source_setup": 180_000,
+                "safety_stock_cost": 520_000,
+                "protected_revenue_per_day": 2_400_000,
+                "agent_source": agent_source,
+            }
+        ),
         trigger_event_id=risk_event_id,
     )
     db.add(decision)
@@ -253,14 +261,17 @@ async def _run_local_agent_pipeline(
     await db.commit()
     created["decision_ids"].append(decision.id)
 
-    await publish_event("agent_action", {
-        "action": "Mitigation plan proposed — awaiting approval",
-        "agent_type": "strategy",
-        "decision_type": "mitigation_plan",
-        "decision_id": decision.id,
-        "status": "proposed",
-        "source": agent_source,
-    })
+    await publish_event(
+        "agent_action",
+        {
+            "action": "Mitigation plan proposed — awaiting approval",
+            "agent_type": "strategy",
+            "decision_type": "mitigation_plan",
+            "decision_id": decision.id,
+            "status": "proposed",
+            "source": agent_source,
+        },
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -377,7 +388,9 @@ async def run_demo(db: AsyncSession) -> dict:
         #
         agent_tier = await _resolve_agent_tier()
         await _publish_step(
-            "agents_deliberating", panel="section-agents", agent_tier=agent_tier,
+            "agents_deliberating",
+            panel="section-agents",
+            agent_tier=agent_tier,
         )
         logger.info("Demo agent tier: %s", agent_tier)
 
@@ -398,7 +411,10 @@ async def run_demo(db: AsyncSession) -> dict:
 
         if agent_tier in ("gemma", "mock"):
             await _run_local_agent_pipeline(
-                db, risk_event.id, created, use_gemma=(agent_tier == "gemma"),
+                db,
+                risk_event.id,
+                created,
+                use_gemma=(agent_tier == "gemma"),
             )
 
         await asyncio.sleep(2.0)

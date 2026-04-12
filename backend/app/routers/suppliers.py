@@ -8,7 +8,7 @@ from app.services import supplier_service
 router = APIRouter(prefix="/api/v1/suppliers", tags=["suppliers"])
 
 
-@router.get("/", response_model=list[SupplierBrief])
+@router.get("", response_model=list[SupplierBrief])
 async def list_suppliers(db: AsyncSession = Depends(get_db)):
     return await supplier_service.list_suppliers(db)
 

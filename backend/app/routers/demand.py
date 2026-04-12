@@ -8,7 +8,7 @@ from app.services import demand_service
 router = APIRouter(prefix="/api/v1/demand", tags=["demand"])
 
 
-@router.get("/", response_model=list[DemandSignalResponse])
+@router.get("", response_model=list[DemandSignalResponse])
 async def list_demand_signals(
     product_id: str | None = Query(None),
     region: str | None = Query(None),

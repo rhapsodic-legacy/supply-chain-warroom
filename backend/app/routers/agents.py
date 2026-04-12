@@ -9,12 +9,16 @@ from app.schemas import (
     AgentDecisionResponse,
     AgentHandoffResponse,
     AgentHandoffSessionResponse,
+    AgentMemoryBrief,
+    AgentMemoryResponse,
+    AgentMemoryStats,
     ChatRequest,
     ChatResponse,
     DecisionStatusUpdate,
 )
 from app.services import agent_service
 from app.services import handoff_service
+from app.services import memory_service
 
 router = APIRouter(prefix="/api/v1/agents", tags=["agents"])
 
@@ -70,6 +74,42 @@ async def list_handoff_sessions(
     db: AsyncSession = Depends(get_db),
 ):
     return await handoff_service.list_sessions(db, limit=limit)
+
+
+# ---------------------------------------------------------------------------
+# Memory endpoints
+# ---------------------------------------------------------------------------
+
+
+@router.get("/memories", response_model=list[AgentMemoryBrief])
+async def list_memories(
+    agent_type: str | None = Query(None),
+    category: str | None = Query(None),
+    outcome: str | None = Query(None),
+    limit: int = Query(50, ge=1, le=200),
+    db: AsyncSession = Depends(get_db),
+):
+    return await memory_service.list_memories(
+        db, agent_type=agent_type, category=category, outcome=outcome, limit=limit
+    )
+
+
+@router.get("/memories/stats", response_model=AgentMemoryStats)
+async def get_memory_stats(db: AsyncSession = Depends(get_db)):
+    return await memory_service.get_memory_stats(db)
+
+
+@router.get("/memories/{memory_id}", response_model=AgentMemoryResponse)
+async def get_memory(memory_id: str, db: AsyncSession = Depends(get_db)):
+    memory = await memory_service.get_memory(db, memory_id)
+    if not memory:
+        raise HTTPException(status_code=404, detail="Agent memory not found")
+    return memory
+
+
+# ---------------------------------------------------------------------------
+# Chat endpoint
+# ---------------------------------------------------------------------------
 
 
 @router.post("/chat", response_model=ChatResponse)

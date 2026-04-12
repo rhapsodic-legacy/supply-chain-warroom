@@ -10,17 +10,20 @@ import { OrderTracker } from '../panels/OrderTracker';
 import { DemandChart } from '../panels/DemandChart';
 import { AgentLog } from '../panels/AgentLog';
 import { AgentPipeline } from '../panels/AgentPipeline';
+import { AgentMemoryPanel } from '../panels/AgentMemoryPanel';
+import { AlertRulesPanel } from '../panels/AlertRulesPanel';
 import { SimPanel } from '../panels/SimPanel';
 import { ChatPanel } from '../panels/ChatPanel';
 import { DemoButton } from '../demo/DemoButton';
 import { DemoProgress } from '../demo/DemoProgress';
 import { DemoOverlay } from '../demo/DemoOverlay';
 
-type Tab = 'pipeline' | 'agents' | 'chat';
+type Tab = 'pipeline' | 'agents' | 'memory' | 'chat';
 
 const TAB_LABELS: Record<Tab, string> = {
   pipeline: 'Pipeline',
   agents: 'Agent Log',
+  memory: 'Memory',
   chat: 'Chat',
 };
 
@@ -36,7 +39,7 @@ function AgentChatTabs({ className, style }: { className?: string; style?: React
         className="flex flex-shrink-0"
         style={{ borderBottom: '1px solid var(--wr-border)' }}
       >
-        {(['pipeline', 'agents', 'chat'] as Tab[]).map((t) => (
+        {(['pipeline', 'agents', 'memory', 'chat'] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -56,6 +59,8 @@ function AgentChatTabs({ className, style }: { className?: string; style?: React
           <AgentPipeline className="h-full border-0 rounded-none" />
         ) : tab === 'agents' ? (
           <AgentLog className="h-full border-0 rounded-none" />
+        ) : tab === 'memory' ? (
+          <AgentMemoryPanel className="h-full border-0 rounded-none" />
         ) : (
           <ChatPanel className="h-full border-0 rounded-none" />
         )}
@@ -188,13 +193,16 @@ export function WarRoomShell() {
             </div>
           </div>
 
-          {/* Row 2: Risk + Suppliers */}
-          <div className="grid gap-2 mb-2 items-start" style={{ gridTemplateColumns: '1fr 1fr' }}>
+          {/* Row 2: Risk + Suppliers + Alert Rules */}
+          <div className="grid gap-2 mb-2 items-start" style={{ gridTemplateColumns: '1fr 1fr 340px' }}>
             <div id="section-risk" className={hl('section-risk')}>
               <RiskFeed />
             </div>
             <div id="section-suppliers" className={hl('section-suppliers')}>
               <SupplierGrid />
+            </div>
+            <div id="section-alerts">
+              <AlertRulesPanel />
             </div>
           </div>
 

@@ -20,10 +20,14 @@ from app.seed.demand import generate_demand
 from app.seed.orders import generate_orders
 from app.seed.risk_events import generate_risk_events
 from app.seed.agent_decisions import generate_agent_decisions
+from app.seed.agent_memories import generate_agent_memories
+from app.seed.alert_rules import generate_alert_rules
 
 
 # Table names in deletion order (respects foreign keys)
 _TABLES_DELETE_ORDER = [
+    "alert_rules",
+    "agent_memories",
     "risk_event_impacts",
     "risk_events",
     "order_events",
@@ -139,6 +143,14 @@ async def seed_database(db_url: str | None = None) -> None:
     agent_decisions = generate_agent_decisions(risk_events, orders, suppliers, seed=42)
     console.print(f"  Agent decisions:   [cyan]{len(agent_decisions)}[/cyan]")
 
+    # Agent memories
+    agent_memories = generate_agent_memories(risk_events, agent_decisions, seed=42)
+    console.print(f"  Agent memories:    [cyan]{len(agent_memories)}[/cyan]")
+
+    # Alert rules
+    alert_rules = generate_alert_rules(seed=42)
+    console.print(f"  Alert rules:       [cyan]{len(alert_rules)}[/cyan]")
+
     # -----------------------------------------------------------------------
     # Insert data
     # -----------------------------------------------------------------------
@@ -154,6 +166,7 @@ async def seed_database(db_url: str | None = None) -> None:
     _add_timestamps(risk_events, ["created_at"])
     _add_timestamps(risk_impacts, ["created_at"])
     _add_timestamps(agent_decisions, ["created_at"])
+    # agent_memories already have created_at/updated_at from generator
 
     async with session_factory() as session:
         await _bulk_insert(session, "products", products, console)
@@ -165,6 +178,8 @@ async def seed_database(db_url: str | None = None) -> None:
         await _bulk_insert(session, "risk_events", risk_events, console)
         await _bulk_insert(session, "risk_event_impacts", risk_impacts, console)
         await _bulk_insert(session, "agent_decisions", agent_decisions, console)
+        await _bulk_insert(session, "agent_memories", agent_memories, console)
+        await _bulk_insert(session, "alert_rules", alert_rules, console)
         await session.commit()
 
     # -----------------------------------------------------------------------
@@ -182,6 +197,8 @@ async def seed_database(db_url: str | None = None) -> None:
     summary.add_row("Risk Events", str(len(risk_events)))
     summary.add_row("Risk Event Impacts", str(len(risk_impacts)))
     summary.add_row("Agent Decisions", str(len(agent_decisions)))
+    summary.add_row("Agent Memories", str(len(agent_memories)))
+    summary.add_row("Alert Rules", str(len(alert_rules)))
 
     console.print()
     console.print(summary)

@@ -33,44 +33,16 @@
 ## Screenshots
 
 <p align="center">
-  <img src="docs/assets/dashboard-overview.png" alt="War Room Dashboard" width="800" />
+  <img src="docs/assets/main_1.jpg" alt="War Room Dashboard — Map, Agent Log, Alert Rules" width="800" />
   <br />
-  <em>Command center with live risk feed, supplier health grid, agent decisions, and global map</em>
+  <em>Command center: global shipping routes, agent decisions with full audit trail, and custom alert rules engine</em>
 </p>
 
-<details>
-<summary><strong>Simulation Lab & Scenario Comparison</strong></summary>
-<br />
 <p align="center">
-  <img src="docs/assets/simulation-lab.png" alt="Simulation Lab" width="700" />
-  <br /><br />
-  <img src="docs/assets/scenario-comparison.png" alt="Multi-Scenario Comparison" width="700" />
+  <img src="docs/assets/main_2.jpg" alt="War Room Dashboard — Risk Feed, Demand, Orders, Simulation" width="800" />
   <br />
-  <em>Run preset or custom scenarios, then compare 2-5 results side-by-side with overlapping distributions</em>
+  <em>Risk feed with live alerts, demand vs forecast charts, order pipeline, supplier health, and Monte Carlo simulation lab</em>
 </p>
-</details>
-
-<details>
-<summary><strong>Executive Summary & Agent Pipeline</strong></summary>
-<br />
-<p align="center">
-  <img src="docs/assets/executive-summary.png" alt="Executive Summary" width="700" />
-  <br /><br />
-  <img src="docs/assets/agent-pipeline.png" alt="Agent Handoff Pipeline" width="700" />
-  <br />
-  <em>Boardroom-ready briefs with ROI analysis, and visual agent-to-agent handoff timeline</em>
-</p>
-</details>
-
-<details>
-<summary><strong>Demo Mode Walkthrough</strong></summary>
-<br />
-<p align="center">
-  <img src="docs/assets/demo-mode.gif" alt="Demo Mode" width="700" />
-  <br />
-  <em>One-click guided walkthrough: triggers disruption, agents deliberate, simulation runs, mitigation proposed</em>
-</p>
-</details>
 
 ---
 
@@ -94,6 +66,8 @@
 | **Human-in-the-Loop Approval** | Execution agent requires explicit approval before acting. Approve/reject with glow effects and state machine validation. |
 | **Decision Audit Trail** | Every agent action logged with full reasoning, confidence score, cost/time impact, affected orders, and timeline. Expand any decision to see the complete chain. |
 | **Agent Handoff Visibility** | Watch the orchestrator delegate to specialists in real-time. Animated pipeline view shows risk monitor -> simulation -> strategy -> execution flow. |
+| **Agent Memory & Learning** | Agents store lessons from past decisions and recall them in similar situations. "Last time we faced a port closure in East Asia, rerouting via HCMC saved $400K." Effectiveness tracked over time. |
+| **Custom Alert Rules** | Define threshold-based rules (e.g. "supplier reliability < 0.7") that auto-evaluate after every ingestion cycle. Fires risk alerts and optionally triggers agent analysis. |
 | **Conversational Interface** | Ask agents anything: "Why did you reroute PO-2025-0042?" and get the full reasoning chain. |
 
 ### Demo & Presentation
@@ -101,7 +75,7 @@
 | Feature | Description |
 |---------|-------------|
 | **Demo Mode** | One-click guided walkthrough auto-plays a scenario end-to-end: triggers disruption, risk feed lights up, agents deliberate, simulation runs, mitigation gets proposed. |
-| **12-Panel Dashboard** | World map, risk feed, supplier grid, order tracker, demand chart, agent log, simulation lab, chat panel, agent pipeline, scenario builder, executive summary, scenario comparison. |
+| **14-Panel Dashboard** | World map, risk feed, supplier grid, order tracker, demand chart, agent log, agent memory, alert rules, simulation lab, chat panel, agent pipeline, scenario builder, executive summary, scenario comparison. |
 
 ---
 
@@ -138,7 +112,7 @@
 
 | Agent | Role | Key Tools |
 |-------|------|-----------|
-| **Orchestrator** | Routes queries to specialists, chains multi-step workflows | `get_war_room_context`, `query_decision_log` |
+| **Orchestrator** | Routes queries to specialists, chains multi-step workflows | `get_war_room_context`, `query_decision_log`, `recall_similar_decisions`, `record_lesson` |
 | **Risk Monitor** | Detects and scores supply chain risks across 5 categories | `query_risk_events`, `score_suppliers`, `create_alert`, `fetch_risk_signals` |
 | **Simulation** | Runs what-if Monte Carlo scenarios, interprets distributions | `run_monte_carlo`, `list_preset_scenarios`, `query_network_stats` |
 | **Strategy** | Generates costed mitigation plans with alternatives | `query_inventory_status`, `query_alternative_suppliers`, `generate_mitigation_plan` |
@@ -290,7 +264,7 @@ supply_room/
 ├── backend/
 │   ├── app/
 │   │   ├── agents/          # 5 Claude Agent SDK agents + tool implementations
-│   │   ├── models/          # 11 SQLAlchemy ORM models
+│   │   ├── models/          # 13 SQLAlchemy ORM models
 │   │   ├── routers/         # FastAPI route modules
 │   │   ├── schemas/         # Pydantic v2 request/response schemas
 │   │   ├── services/        # Business logic layer
@@ -301,7 +275,7 @@ supply_room/
 │   └── src/
 │       ├── components/
 │       │   ├── layout/      # WarRoomShell, Sidebar, StatusBar
-│       │   ├── panels/      # 12 dashboard widgets
+│       │   ├── panels/      # 14 dashboard widgets
 │       │   ├── shared/      # Button, Card, Badge, Modal, Spinner
 │       │   └── demo/        # Demo mode overlay + progress
 │       ├── hooks/           # TanStack Query data hooks
@@ -316,19 +290,41 @@ supply_room/
 
 ## Deployment
 
-### Docker Compose (self-hosted)
+### Development (hot-reload)
 
 ```bash
-docker-compose up -d
+docker-compose up
+# Frontend: http://localhost:5173 (Vite dev server with HMR)
+# Backend:  http://localhost:8000 (auto-reload on file changes)
+```
+
+### Production (localhost)
+
+```bash
+docker-compose -f docker-compose.prod.yml up --build
+# App: http://localhost (nginx serves built SPA, proxies to backend)
 ```
 
 ### Cloud Deployment
 
-| Service | Platform | Notes |
-|---------|----------|-------|
-| **Frontend** | Vercel | Set root to `frontend`, add `VITE_API_URL` env var |
-| **Backend** | Railway | Set root to `backend`, add `ANTHROPIC_API_KEY` + Railway Postgres |
-| **Database** | Railway Postgres | Auto-provisioned as addon |
+| Service | Platform | Config | Notes |
+|---------|----------|--------|-------|
+| **Frontend** | Vercel | `vercel.json` | Set `VITE_API_URL` to your Railway backend URL |
+| **Backend** | Railway | `railway.toml` | Add `ANTHROPIC_API_KEY`, attach Railway Postgres addon |
+| **Database** | Railway Postgres | Auto-provisioned | Railway provides `DATABASE_URL` automatically |
+
+```bash
+# Railway (backend + Postgres)
+railway login
+railway init
+railway add --plugin postgresql
+railway variables set ANTHROPIC_API_KEY=sk-ant-...
+railway up
+
+# Vercel (frontend)
+vercel --prod
+# Set env: VITE_API_URL=https://your-app.railway.app
+```
 
 ---
 

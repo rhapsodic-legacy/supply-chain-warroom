@@ -70,12 +70,15 @@ async def update_decision_status(
     # Broadcast via SSE
     from app.routers.stream import publish_event
 
-    await publish_event("agent_action", {
-        "action": f"Decision {target_status}: {decision.decision_summary[:100]}",
-        "agent_type": decision.agent_type,
-        "decision_type": decision.decision_type,
-        "decision_id": decision.id,
-        "status": target_status,
-    })
+    await publish_event(
+        "agent_action",
+        {
+            "action": f"Decision {target_status}: {decision.decision_summary[:100]}",
+            "agent_type": decision.agent_type,
+            "decision_type": decision.decision_type,
+            "decision_id": decision.id,
+            "status": target_status,
+        },
+    )
 
     return decision

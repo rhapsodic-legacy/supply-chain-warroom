@@ -13,6 +13,7 @@ from typing import Any
 import anthropic
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.agents.tools.memory_tools import recall_similar_decisions, record_lesson
 from app.agents.tools.strategy_tools import (
     cost_benefit_analysis,
     generate_mitigation_plan,
@@ -69,6 +70,13 @@ OUTPUT STANDARDS
 - If you lack data to produce a confident recommendation, state what
   additional information you need and from which agent (Risk Monitor or
   Simulation).
+
+INSTITUTIONAL MEMORY
+Before formulating strategies, check institutional memory for similar past
+situations using recall_similar_decisions. Reference relevant past outcomes
+in your recommendations: "In a previous [category] event affecting [region],
+[action] proved [outcome] — [lesson]." After generating a mitigation plan,
+record the key strategic reasoning as a lesson for future reference.
 
 CONSTRAINTS
 - You PROPOSE strategies but never execute them. Execution is the
@@ -196,6 +204,78 @@ TOOLS: list[dict[str, Any]] = [
             ],
         },
     },
+    {
+        "name": "recall_similar_decisions",
+        "description": (
+            "Search institutional memory for lessons learned from past decisions "
+            "in similar situations. Use before generating strategies to learn from "
+            "past successes and failures."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string",
+                    "description": "Disruption category (e.g. 'port_closure', 'supplier_failure').",
+                },
+                "affected_region": {
+                    "type": "string",
+                    "description": "Geographic region.",
+                },
+                "risk_type": {
+                    "type": "string",
+                    "description": "Type of risk event.",
+                },
+                "severity": {
+                    "type": "string",
+                    "enum": ["low", "medium", "high", "critical"],
+                    "description": "Severity level.",
+                },
+            },
+        },
+    },
+    {
+        "name": "record_lesson",
+        "description": (
+            "Record a lesson learned after generating a mitigation plan. "
+            "Captures the situation, action, and strategic reasoning for "
+            "future reference."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string",
+                    "description": "Disruption category.",
+                },
+                "situation": {
+                    "type": "string",
+                    "description": "Brief description of the situation.",
+                },
+                "action_taken": {
+                    "type": "string",
+                    "description": "Strategy recommended.",
+                },
+                "outcome": {
+                    "type": "string",
+                    "enum": ["effective", "partially_effective", "ineffective", "pending"],
+                    "description": "Outcome assessment. Use 'pending' for newly proposed strategies.",
+                },
+                "lesson": {
+                    "type": "string",
+                    "description": "Key takeaway for future decisions.",
+                },
+                "affected_region": {"type": "string"},
+                "risk_type": {"type": "string"},
+                "severity": {"type": "string", "enum": ["low", "medium", "high", "critical"]},
+                "confidence_score": {"type": "number"},
+                "decision_id": {"type": "string"},
+                "cost_impact": {"type": "number"},
+                "time_impact_days": {"type": "integer"},
+            },
+            "required": ["category", "situation", "action_taken", "outcome", "lesson"],
+        },
+    },
 ]
 
 
@@ -240,6 +320,31 @@ async def _execute_tools(response: anthropic.types.Message, db: AsyncSession) ->
                     proposed_cost=inp["proposed_cost"],
                     delay_reduction_days=inp["delay_reduction_days"],
                     risk_reduction_pct=inp["risk_reduction_pct"],
+                )
+            elif name == "recall_similar_decisions":
+                result = await recall_similar_decisions(
+                    db,
+                    category=inp.get("category"),
+                    affected_region=inp.get("affected_region"),
+                    risk_type=inp.get("risk_type"),
+                    severity=inp.get("severity"),
+                )
+            elif name == "record_lesson":
+                result = await record_lesson(
+                    db,
+                    agent_type="strategy",
+                    category=inp["category"],
+                    situation=inp["situation"],
+                    action_taken=inp["action_taken"],
+                    outcome=inp["outcome"],
+                    lesson=inp["lesson"],
+                    confidence_score=inp.get("confidence_score", 0.7),
+                    decision_id=inp.get("decision_id"),
+                    affected_region=inp.get("affected_region"),
+                    severity=inp.get("severity"),
+                    risk_type=inp.get("risk_type"),
+                    cost_impact=inp.get("cost_impact"),
+                    time_impact_days=inp.get("time_impact_days"),
                 )
             else:
                 result = json.dumps({"error": f"Unknown tool: {name}"})

@@ -22,6 +22,7 @@ from app.agents.execution_agent import run_execution_agent
 from app.agents.risk_monitor import run_risk_monitor
 from app.agents.simulation_agent import run_simulation_agent
 from app.agents.strategy_agent import run_strategy_agent
+from app.agents.tools.memory_tools import recall_similar_decisions, record_lesson
 from app.models import AgentDecision, AgentHandoff, Order, RiskEvent, Simulation
 from app.routers.stream import publish_event
 from app.schemas import ChatResponse
@@ -85,6 +86,20 @@ COMMUNICATION STYLE
   guessing — but offer your best interpretation as a default.
 - When actions are available, present them clearly with a call-to-action
   (e.g., "Would you like me to execute this plan?").
+
+INSTITUTIONAL MEMORY
+You have access to a memory system that stores lessons learned from past
+decisions. Use it proactively:
+- Before analyzing a new risk or making recommendations, recall similar
+  past decisions to see what worked or failed before.
+- When a decision has a clear outcome (approved and executed, or rejected
+  with feedback), record the lesson for future reference.
+- When presenting recommendations, reference relevant past experience:
+  "Last time we faced a similar port closure in East Asia, rerouting via
+  Singapore added 3 days but saved $2.4M in delay costs."
+- Patterns that repeat (same category, region, risk type) should increase
+  your confidence when the past outcome was positive, or trigger caution
+  when it was negative.
 
 SAFETY AND GOVERNANCE
 - Never execute supply chain actions without explicit user approval.
@@ -208,6 +223,107 @@ ORCHESTRATOR_TOOLS: list[dict[str, Any]] = [
         "input_schema": {
             "type": "object",
             "properties": {},
+        },
+    },
+    {
+        "name": "recall_similar_decisions",
+        "description": (
+            "Search institutional memory for past decisions and lessons learned "
+            "in similar situations. Use BEFORE making recommendations to surface "
+            "'last time this happened...' context. Matches on disruption category, "
+            "affected region, risk type, and severity."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string",
+                    "description": (
+                        "Disruption category to search for (e.g. 'port_closure', "
+                        "'supplier_failure', 'demand_spike', 'weather_disruption', "
+                        "'logistics_bottleneck', 'geopolitical')."
+                    ),
+                },
+                "affected_region": {
+                    "type": "string",
+                    "description": "Geographic region (e.g. 'East Asia', 'Europe', 'North America').",
+                },
+                "risk_type": {
+                    "type": "string",
+                    "description": "Type of risk event (e.g. 'geopolitical', 'weather', 'logistics').",
+                },
+                "severity": {
+                    "type": "string",
+                    "enum": ["low", "medium", "high", "critical"],
+                    "description": "Severity level to match.",
+                },
+            },
+        },
+    },
+    {
+        "name": "record_lesson",
+        "description": (
+            "Record a lesson learned from a decision outcome for future reference. "
+            "Use after evaluating the result of an action — whether it was effective, "
+            "partially effective, or ineffective. Builds institutional knowledge over time."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string",
+                    "description": "Disruption category (e.g. 'port_closure', 'supplier_failure').",
+                },
+                "situation": {
+                    "type": "string",
+                    "description": "Brief description of the situation that was faced.",
+                },
+                "action_taken": {
+                    "type": "string",
+                    "description": "What action was taken in response.",
+                },
+                "outcome": {
+                    "type": "string",
+                    "enum": ["effective", "partially_effective", "ineffective"],
+                    "description": "How effective the action was.",
+                },
+                "lesson": {
+                    "type": "string",
+                    "description": (
+                        "The key takeaway for future decisions. Be specific and actionable."
+                    ),
+                },
+                "affected_region": {
+                    "type": "string",
+                    "description": "Geographic region affected.",
+                },
+                "risk_type": {
+                    "type": "string",
+                    "description": "Type of risk event.",
+                },
+                "severity": {
+                    "type": "string",
+                    "enum": ["low", "medium", "high", "critical"],
+                    "description": "Severity level.",
+                },
+                "confidence_score": {
+                    "type": "number",
+                    "description": "Confidence in the lesson (0.0-1.0). Default 0.7.",
+                },
+                "decision_id": {
+                    "type": "string",
+                    "description": "ID of the related agent decision, if applicable.",
+                },
+                "cost_impact": {
+                    "type": "number",
+                    "description": "Cost impact in USD.",
+                },
+                "time_impact_days": {
+                    "type": "integer",
+                    "description": "Time impact in days.",
+                },
+            },
+            "required": ["category", "situation", "action_taken", "outcome", "lesson"],
         },
     },
 ]
@@ -372,15 +488,18 @@ async def _execute_orchestrator_tool(
         db.add(handoff)
         await db.flush()
 
-        await publish_event("agent_handoff", {
-            "handoff_id": handoff.id,
-            "session_id": session_id,
-            "sequence": sequence,
-            "from_agent": "orchestrator",
-            "to_agent": tool_name,
-            "query": tool_input.get("query", ""),
-            "status": "running",
-        })
+        await publish_event(
+            "agent_handoff",
+            {
+                "handoff_id": handoff.id,
+                "session_id": session_id,
+                "sequence": sequence,
+                "from_agent": "orchestrator",
+                "to_agent": tool_name,
+                "query": tool_input.get("query", ""),
+                "status": "running",
+            },
+        )
 
     start = time.monotonic()
 
@@ -411,6 +530,33 @@ async def _execute_orchestrator_tool(
         elif tool_name == "get_war_room_context":
             return await _get_war_room_context(db)
 
+        elif tool_name == "recall_similar_decisions":
+            return await recall_similar_decisions(
+                db,
+                category=tool_input.get("category"),
+                affected_region=tool_input.get("affected_region"),
+                risk_type=tool_input.get("risk_type"),
+                severity=tool_input.get("severity"),
+            )
+
+        elif tool_name == "record_lesson":
+            return await record_lesson(
+                db,
+                agent_type="orchestrator",
+                category=tool_input["category"],
+                situation=tool_input["situation"],
+                action_taken=tool_input["action_taken"],
+                outcome=tool_input["outcome"],
+                lesson=tool_input["lesson"],
+                confidence_score=tool_input.get("confidence_score", 0.7),
+                decision_id=tool_input.get("decision_id"),
+                affected_region=tool_input.get("affected_region"),
+                severity=tool_input.get("severity"),
+                risk_type=tool_input.get("risk_type"),
+                cost_impact=tool_input.get("cost_impact"),
+                time_impact_days=tool_input.get("time_impact_days"),
+            )
+
         else:
             return json.dumps({"error": f"Unknown tool: {tool_name}"})
 
@@ -423,15 +569,18 @@ async def _execute_orchestrator_tool(
             handoff.result_summary = response_text[:300] if response_text else None
             await db.flush()
 
-            await publish_event("agent_handoff", {
-                "handoff_id": handoff.id,
-                "session_id": session_id,
-                "sequence": sequence,
-                "from_agent": "orchestrator",
-                "to_agent": tool_name,
-                "status": "completed",
-                "duration_ms": elapsed_ms,
-            })
+            await publish_event(
+                "agent_handoff",
+                {
+                    "handoff_id": handoff.id,
+                    "session_id": session_id,
+                    "sequence": sequence,
+                    "from_agent": "orchestrator",
+                    "to_agent": tool_name,
+                    "status": "completed",
+                    "duration_ms": elapsed_ms,
+                },
+            )
 
         return response_text
 
@@ -446,15 +595,18 @@ async def _execute_orchestrator_tool(
             handoff.result_summary = str(exc)[:300]
             await db.flush()
 
-            await publish_event("agent_handoff", {
-                "handoff_id": handoff.id,
-                "session_id": session_id,
-                "sequence": sequence,
-                "from_agent": "orchestrator",
-                "to_agent": tool_name,
-                "status": "error",
-                "duration_ms": elapsed_ms,
-            })
+            await publish_event(
+                "agent_handoff",
+                {
+                    "handoff_id": handoff.id,
+                    "session_id": session_id,
+                    "sequence": sequence,
+                    "from_agent": "orchestrator",
+                    "to_agent": tool_name,
+                    "status": "error",
+                    "duration_ms": elapsed_ms,
+                },
+            )
 
         return json.dumps({"error": f"Tool '{tool_name}' failed: {str(exc)}"})
 

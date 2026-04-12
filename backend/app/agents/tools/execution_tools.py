@@ -103,13 +103,16 @@ async def reroute_order(
 
     from app.routers.stream import publish_event
 
-    await publish_event("agent_action", {
-        "action": f"Rerouted order {order.order_number}",
-        "agent_type": "execution",
-        "decision_type": "order_reroute",
-        "decision_id": decision.id,
-        "confidence": 0.90,
-    })
+    await publish_event(
+        "agent_action",
+        {
+            "action": f"Rerouted order {order.order_number}",
+            "agent_type": "execution",
+            "decision_type": "order_reroute",
+            "decision_id": decision.id,
+            "confidence": 0.90,
+        },
+    )
 
     return json.dumps(
         {
@@ -213,19 +216,25 @@ async def trigger_safety_stock(
 
     from app.routers.stream import publish_event
 
-    await publish_event("agent_action", {
-        "action": f"Emergency order {order_number}: {quantity}x {product.name}",
-        "agent_type": "execution",
-        "decision_type": "safety_stock_order",
-        "decision_id": decision.id,
-        "confidence": 0.85,
-    })
-    await publish_event("order_update", {
-        "order_id": order.id,
-        "order_number": order_number,
-        "status": "pending",
-        "action": "created",
-    })
+    await publish_event(
+        "agent_action",
+        {
+            "action": f"Emergency order {order_number}: {quantity}x {product.name}",
+            "agent_type": "execution",
+            "decision_type": "safety_stock_order",
+            "decision_id": decision.id,
+            "confidence": 0.85,
+        },
+    )
+    await publish_event(
+        "order_update",
+        {
+            "order_id": order.id,
+            "order_number": order_number,
+            "status": "pending",
+            "action": "created",
+        },
+    )
 
     return json.dumps(
         {
@@ -287,18 +296,24 @@ async def update_supplier_status(
 
     from app.routers.stream import publish_event
 
-    await publish_event("agent_action", {
-        "action": f"Supplier {supplier.name} {action}",
-        "agent_type": "execution",
-        "decision_type": "supplier_status_change",
-        "decision_id": decision.id,
-        "confidence": 0.90,
-    })
-    await publish_event("supply_alert", {
-        "severity": "high" if not is_active else "info",
-        "message": f"Supplier {supplier.name} has been {action}: {reason}",
-        "supplier_id": supplier_id,
-    })
+    await publish_event(
+        "agent_action",
+        {
+            "action": f"Supplier {supplier.name} {action}",
+            "agent_type": "execution",
+            "decision_type": "supplier_status_change",
+            "decision_id": decision.id,
+            "confidence": 0.90,
+        },
+    )
+    await publish_event(
+        "supply_alert",
+        {
+            "severity": "high" if not is_active else "info",
+            "message": f"Supplier {supplier.name} has been {action}: {reason}",
+            "supplier_id": supplier_id,
+        },
+    )
 
     return json.dumps(
         {
@@ -348,13 +363,16 @@ async def log_webhook(
 
     from app.routers.stream import publish_event
 
-    await publish_event("agent_action", {
-        "action": f"Webhook [{event_type}] sent to {target}",
-        "agent_type": "execution",
-        "decision_type": "webhook_notification",
-        "decision_id": decision.id,
-        "confidence": 1.0,
-    })
+    await publish_event(
+        "agent_action",
+        {
+            "action": f"Webhook [{event_type}] sent to {target}",
+            "agent_type": "execution",
+            "decision_type": "webhook_notification",
+            "decision_id": decision.id,
+            "confidence": 1.0,
+        },
+    )
 
     return json.dumps(
         {

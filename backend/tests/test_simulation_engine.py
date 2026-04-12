@@ -400,7 +400,9 @@ class TestDeterministicSeeds:
             name="Repro",
             description="reproducibility test",
             disruptions=[
-                Disruption(type="route_closure", affected_ids=["E2"], severity=0.9, duration_days=14),
+                Disruption(
+                    type="route_closure", affected_ids=["E2"], severity=0.9, duration_days=14
+                ),
             ],
             time_horizon_days=60,
         )
@@ -454,65 +456,75 @@ class TestDisruptionTypes:
 
     def test_capacity_reduction_lowers_fill_rate(self):
         baseline = self._baseline()
-        result = self._run([
-            Disruption(
-                type="capacity_reduction",
-                affected_ids=["E2"],
-                severity=0.8,
-                duration_days=30,
-                parameters={"remaining_fraction": 0.10},
-            ),
-        ])
+        result = self._run(
+            [
+                Disruption(
+                    type="capacity_reduction",
+                    affected_ids=["E2"],
+                    severity=0.8,
+                    duration_days=30,
+                    parameters={"remaining_fraction": 0.10},
+                ),
+            ]
+        )
         assert result.fill_rate_distribution.mean < baseline.fill_rate_distribution.mean + 0.01
 
     def test_node_shutdown_zeroes_capacity(self):
-        result = self._run([
-            Disruption(
-                type="node_shutdown",
-                affected_ids=["P1"],
-                severity=1.0,
-                duration_days=20,
-            ),
-        ])
+        result = self._run(
+            [
+                Disruption(
+                    type="node_shutdown",
+                    affected_ids=["P1"],
+                    severity=1.0,
+                    duration_days=20,
+                ),
+            ]
+        )
         # Shutting down the only port should cause stockouts
         assert result.stockout_distribution.mean > 0
 
     def test_demand_spike_increases_cost(self):
         baseline = self._baseline()
-        result = self._run([
-            Disruption(
-                type="demand_spike",
-                affected_ids=[],
-                severity=0.8,
-                duration_days=30,
-                parameters={"demand_multiplier": 2.5},
-            ),
-        ])
+        result = self._run(
+            [
+                Disruption(
+                    type="demand_spike",
+                    affected_ids=[],
+                    severity=0.8,
+                    duration_days=30,
+                    parameters={"demand_multiplier": 2.5},
+                ),
+            ]
+        )
         # Higher demand → higher total cost
         assert result.cost_distribution.mean > baseline.cost_distribution.mean
 
     def test_cost_increase_raises_mean_cost(self):
         baseline = self._baseline()
-        result = self._run([
-            Disruption(
-                type="cost_increase",
-                affected_ids=["E2"],
-                severity=0.5,
-                duration_days=60,
-                parameters={"cost_multiplier": 3.0},
-            ),
-        ])
+        result = self._run(
+            [
+                Disruption(
+                    type="cost_increase",
+                    affected_ids=["E2"],
+                    severity=0.5,
+                    duration_days=60,
+                    parameters={"cost_multiplier": 3.0},
+                ),
+            ]
+        )
         assert result.cost_distribution.mean > baseline.cost_distribution.mean
 
     def test_route_closure_causes_stockouts(self):
-        result = self._run([
-            Disruption(
-                type="route_closure",
-                affected_ids=["E2"],
-                severity=1.0,
-                duration_days=30,
-            ),
-        ])
+        result = self._run(
+            [
+                Disruption(
+                    type="route_closure",
+                    affected_ids=["E2"],
+                    severity=1.0,
+                    duration_days=30,
+                ),
+            ]
+        )
         # Single-path network: closing E2 means zero capacity → stockouts
         assert result.stockout_distribution.mean > 0
         assert result.fill_rate_distribution.mean < 1.0
@@ -527,39 +539,96 @@ def _build_multi_path_network() -> SupplyChainNetwork:
     """Two suppliers, two paths to customer — tests redundancy."""
     nodes = {
         "S1": Node(
-            id="S1", type="supplier", name="Supplier A", region="East Asia",
-            capacity_per_day=5000, lat=31.0, lon=121.0,
+            id="S1",
+            type="supplier",
+            name="Supplier A",
+            region="East Asia",
+            capacity_per_day=5000,
+            lat=31.0,
+            lon=121.0,
         ),
         "S2": Node(
-            id="S2", type="supplier", name="Supplier B", region="Southeast Asia",
-            capacity_per_day=3000, lat=13.0, lon=100.0,
+            id="S2",
+            type="supplier",
+            name="Supplier B",
+            region="Southeast Asia",
+            capacity_per_day=3000,
+            lat=13.0,
+            lon=100.0,
         ),
         "P1": Node(
-            id="P1", type="port", name="Shanghai", region="China",
-            capacity_per_day=20000, lat=31.2, lon=121.5,
+            id="P1",
+            type="port",
+            name="Shanghai",
+            region="China",
+            capacity_per_day=20000,
+            lat=31.2,
+            lon=121.5,
         ),
         "P2": Node(
-            id="P2", type="port", name="Bangkok", region="Thailand",
-            capacity_per_day=15000, lat=13.7, lon=100.5,
+            id="P2",
+            type="port",
+            name="Bangkok",
+            region="Thailand",
+            capacity_per_day=15000,
+            lat=13.7,
+            lon=100.5,
         ),
         "C1": Node(
-            id="C1", type="customer", name="US Demand", region="North America",
-            capacity_per_day=1e9, lat=40.0, lon=-74.0,
+            id="C1",
+            type="customer",
+            name="US Demand",
+            region="North America",
+            capacity_per_day=1e9,
+            lat=40.0,
+            lon=-74.0,
         ),
     }
     edges = {
-        "E1": Edge(id="E1", source_id="S1", target_id="P1", transport_mode="truck",
-                    base_lead_time=2.0, lead_time_std=1.0, cost_per_unit=0.10,
-                    capacity_per_day=5000, reliability=0.90),
-        "E2": Edge(id="E2", source_id="P1", target_id="C1", transport_mode="ocean",
-                    base_lead_time=14.0, lead_time_std=3.0, cost_per_unit=0.20,
-                    capacity_per_day=10000, reliability=0.85),
-        "E3": Edge(id="E3", source_id="S2", target_id="P2", transport_mode="truck",
-                    base_lead_time=3.0, lead_time_std=1.5, cost_per_unit=0.12,
-                    capacity_per_day=3000, reliability=0.88),
-        "E4": Edge(id="E4", source_id="P2", target_id="C1", transport_mode="ocean",
-                    base_lead_time=18.0, lead_time_std=4.0, cost_per_unit=0.25,
-                    capacity_per_day=8000, reliability=0.82),
+        "E1": Edge(
+            id="E1",
+            source_id="S1",
+            target_id="P1",
+            transport_mode="truck",
+            base_lead_time=2.0,
+            lead_time_std=1.0,
+            cost_per_unit=0.10,
+            capacity_per_day=5000,
+            reliability=0.90,
+        ),
+        "E2": Edge(
+            id="E2",
+            source_id="P1",
+            target_id="C1",
+            transport_mode="ocean",
+            base_lead_time=14.0,
+            lead_time_std=3.0,
+            cost_per_unit=0.20,
+            capacity_per_day=10000,
+            reliability=0.85,
+        ),
+        "E3": Edge(
+            id="E3",
+            source_id="S2",
+            target_id="P2",
+            transport_mode="truck",
+            base_lead_time=3.0,
+            lead_time_std=1.5,
+            cost_per_unit=0.12,
+            capacity_per_day=3000,
+            reliability=0.88,
+        ),
+        "E4": Edge(
+            id="E4",
+            source_id="P2",
+            target_id="C1",
+            transport_mode="ocean",
+            base_lead_time=18.0,
+            lead_time_std=4.0,
+            cost_per_unit=0.25,
+            capacity_per_day=8000,
+            reliability=0.82,
+        ),
     }
     net = SupplyChainNetwork(nodes=nodes, edges=edges)
     net._rebuild_index()
@@ -581,7 +650,9 @@ class TestMultiPathNetwork:
             name="Partial Closure",
             description="close path 1",
             disruptions=[
-                Disruption(type="route_closure", affected_ids=["E2"], severity=1.0, duration_days=30),
+                Disruption(
+                    type="route_closure", affected_ids=["E2"], severity=1.0, duration_days=30
+                ),
             ],
             time_horizon_days=60,
         )
@@ -596,8 +667,9 @@ class TestMultiPathNetwork:
             name="Total Closure",
             description="close both ocean routes",
             disruptions=[
-                Disruption(type="route_closure", affected_ids=["E2", "E4"], severity=1.0,
-                           duration_days=60),
+                Disruption(
+                    type="route_closure", affected_ids=["E2", "E4"], severity=1.0, duration_days=60
+                ),
             ],
             time_horizon_days=60,
         )
@@ -652,7 +724,10 @@ class TestEdgeCases:
         network = SupplyChainNetwork()
         network._rebuild_index()
         scenario = Scenario(
-            name="Empty", description="empty network", disruptions=[], time_horizon_days=30,
+            name="Empty",
+            description="empty network",
+            disruptions=[],
+            time_horizon_days=30,
         )
         result = run_simulation(network, scenario, iterations=100, seed=42)
         assert result.cost_distribution.mean == 0
@@ -662,7 +737,10 @@ class TestEdgeCases:
         """Zero time horizon doesn't crash."""
         network = _build_simple_network()
         scenario = Scenario(
-            name="Zero Horizon", description="zero days", disruptions=[], time_horizon_days=0,
+            name="Zero Horizon",
+            description="zero days",
+            disruptions=[],
+            time_horizon_days=0,
         )
         result = run_simulation(network, scenario, iterations=50, seed=42)
         assert isinstance(result, SimulationResult)
@@ -671,7 +749,10 @@ class TestEdgeCases:
         """Engine handles iterations=1 without crashing."""
         network = _build_simple_network()
         scenario = Scenario(
-            name="One Iter", description="single iteration", disruptions=[], time_horizon_days=30,
+            name="One Iter",
+            description="single iteration",
+            disruptions=[],
+            time_horizon_days=30,
         )
         result = run_simulation(network, scenario, iterations=1, seed=42)
         assert result.iterations == 1
@@ -712,7 +793,10 @@ class TestServiceHelpers:
 
         network = _build_simple_network()
         scenario = Scenario(
-            name="Test", description="test", disruptions=[], time_horizon_days=30,
+            name="Test",
+            description="test",
+            disruptions=[],
+            time_horizon_days=30,
         )
         sim_result = run_simulation(network, scenario, iterations=100, seed=42)
         formatted = _format_results(sim_result)
@@ -734,10 +818,12 @@ class TestServiceHelpers:
 
         network = _build_simple_network()
         scenario = Scenario(
-            name="Test", description="test",
+            name="Test",
+            description="test",
             disruptions=[
-                Disruption(type="route_closure", affected_ids=["E2"], severity=0.9,
-                           duration_days=14),
+                Disruption(
+                    type="route_closure", affected_ids=["E2"], severity=0.9, duration_days=14
+                ),
             ],
             time_horizon_days=60,
         )
@@ -772,13 +858,15 @@ class TestServiceHelpers:
         """Custom disruption params build a scenario correctly."""
         from app.services.simulation_service import _resolve_scenario
 
-        scenario = _resolve_scenario({
-            "name": "Custom",
-            "description": "custom test",
-            "disruptions": [
-                {"type": "demand_spike", "severity": 0.5, "duration_days": 10},
-            ],
-        })
+        scenario = _resolve_scenario(
+            {
+                "name": "Custom",
+                "description": "custom test",
+                "disruptions": [
+                    {"type": "demand_spike", "severity": 0.5, "duration_days": 10},
+                ],
+            }
+        )
         assert scenario.name == "Custom"
         assert len(scenario.disruptions) == 1
 

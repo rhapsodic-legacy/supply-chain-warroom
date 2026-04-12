@@ -168,7 +168,7 @@ function DistributionChart({
               boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',
               fontFamily: 'var(--wr-font-mono)',
             }}
-            formatter={(value: number) => [`${value}%`, undefined]}
+            formatter={(value) => value != null ? [`${value}%`, undefined] : ['', undefined]}
           />
           <Legend wrapperStyle={{ fontSize: 10, color: 'var(--wr-text-muted)' }} />
           {scenarios.map((s) => (

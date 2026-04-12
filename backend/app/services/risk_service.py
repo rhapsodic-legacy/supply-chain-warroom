@@ -41,14 +41,17 @@ async def create_risk_event(db: AsyncSession, data: RiskEventCreate) -> RiskEven
     # Push real-time update to all SSE consumers
     from app.routers.stream import publish_event
 
-    await publish_event("risk_update", {
-        "id": event.id,
-        "title": event.title,
-        "severity": event.severity,
-        "severity_score": float(event.severity_score) if event.severity_score else None,
-        "event_type": event.event_type,
-        "affected_region": event.affected_region,
-        "description": event.description,
-    })
+    await publish_event(
+        "risk_update",
+        {
+            "id": event.id,
+            "title": event.title,
+            "severity": event.severity,
+            "severity_score": float(event.severity_score) if event.severity_score else None,
+            "event_type": event.event_type,
+            "affected_region": event.affected_region,
+            "description": event.description,
+        },
+    )
 
     return event

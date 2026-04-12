@@ -9,7 +9,7 @@ from app.schemas import ShippingRouteResponse
 router = APIRouter(prefix="/api/v1/routes", tags=["routes"])
 
 
-@router.get("/", response_model=list[ShippingRouteResponse])
+@router.get("", response_model=list[ShippingRouteResponse])
 async def list_routes(db: AsyncSession = Depends(get_db)):
     stmt = select(ShippingRoute).order_by(ShippingRoute.name)
     result = await db.execute(stmt)

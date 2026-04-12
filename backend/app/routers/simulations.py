@@ -15,7 +15,7 @@ from app.services import executive_summary_service, simulation_service
 router = APIRouter(prefix="/api/v1/simulations", tags=["simulations"])
 
 
-@router.get("/", response_model=list[SimulationBrief])
+@router.get("", response_model=list[SimulationBrief])
 async def list_simulations(db: AsyncSession = Depends(get_db)):
     return await simulation_service.list_simulations(db)
 
@@ -23,7 +23,9 @@ async def list_simulations(db: AsyncSession = Depends(get_db)):
 @router.post("/compare", response_model=SimulationCompareResponse)
 async def compare_simulations(data: SimulationCompareRequest, db: AsyncSession = Depends(get_db)):
     if len(data.simulation_ids) < 2:
-        raise HTTPException(status_code=400, detail="At least 2 simulations required for comparison")
+        raise HTTPException(
+            status_code=400, detail="At least 2 simulations required for comparison"
+        )
     if len(data.simulation_ids) > 5:
         raise HTTPException(status_code=400, detail="Maximum 5 simulations for comparison")
     sims = []
@@ -47,7 +49,7 @@ async def get_simulation(sim_id: str, db: AsyncSession = Depends(get_db)):
     return sim
 
 
-@router.post("/", response_model=SimulationResponse, status_code=201)
+@router.post("", response_model=SimulationResponse, status_code=201)
 async def create_simulation(data: SimulationCreate, db: AsyncSession = Depends(get_db)):
     sim = await simulation_service.create_simulation(db, data)
     # Auto-run immediately so the caller gets results in one round trip

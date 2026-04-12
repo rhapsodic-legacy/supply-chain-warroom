@@ -100,20 +100,52 @@ def _detect_region(title: str, source_country: str) -> str | None:
 def _severity_from_title(title: str) -> tuple[str, float]:
     """Estimate severity from title keywords."""
     title_lower = title.lower()
-    if any(w in title_lower for w in [
-        "crisis", "shutdown", "collapse", "emergency", "critical",
-        "blocked", "grounded", "attack", "war", "explosion",
-    ]):
+    if any(
+        w in title_lower
+        for w in [
+            "crisis",
+            "shutdown",
+            "collapse",
+            "emergency",
+            "critical",
+            "blocked",
+            "grounded",
+            "attack",
+            "war",
+            "explosion",
+        ]
+    ):
         return "critical", 0.85
-    if any(w in title_lower for w in [
-        "disruption", "severe", "major", "sanctions", "strike",
-        "closure", "blockade", "shortage", "shut", "embargo",
-    ]):
+    if any(
+        w in title_lower
+        for w in [
+            "disruption",
+            "severe",
+            "major",
+            "sanctions",
+            "strike",
+            "closure",
+            "blockade",
+            "shortage",
+            "shut",
+            "embargo",
+        ]
+    ):
         return "high", 0.70
-    if any(w in title_lower for w in [
-        "delay", "congestion", "warning", "risk", "alert",
-        "rising", "surge", "pressure", "tension",
-    ]):
+    if any(
+        w in title_lower
+        for w in [
+            "delay",
+            "congestion",
+            "warning",
+            "risk",
+            "alert",
+            "rising",
+            "surge",
+            "pressure",
+            "tension",
+        ]
+    ):
         return "medium", 0.50
     return "low", 0.30
 
@@ -133,33 +165,89 @@ def _is_supply_chain_relevant(title: str) -> bool:
 
     # Multi-word phrases — simple substring match is safe (low false-positive risk)
     PHRASE_TERMS = [
-        "supply chain", "supply-chain", "trade route", "bulk carrier",
-        "production line", "assembly plant", "raw material",
-        "trade war", "export ban", "import ban", "export control",
-        "strait of hormuz", "suez canal", "panama canal", "south china sea",
-        "oil price", "crude oil", "natural gas", "rare earth",
+        "supply chain",
+        "supply-chain",
+        "trade route",
+        "bulk carrier",
+        "production line",
+        "assembly plant",
+        "raw material",
+        "trade war",
+        "export ban",
+        "import ban",
+        "export control",
+        "strait of hormuz",
+        "suez canal",
+        "panama canal",
+        "south china sea",
+        "oil price",
+        "crude oil",
+        "natural gas",
+        "rare earth",
     ]
 
     # Single / short words — use word-boundary regex to avoid matching inside
     # other words (e.g. "export" inside "report", "port" inside "oportunitie")
     WORD_TERMS = [
-        "port", "shipping", "freight", "cargo", "container", "vessel", "maritime",
-        "logistics", "warehouse", "customs", "shipment", "tanker",
-        "shortage", "disruption", "bottleneck", "backlog", "congestion",
-        "closure", "shutdown", "blockade", "embargo", "strike", "walkout",
-        "pipeline", "refinery", "semiconductor", "factory", "manufacturing",
-        "sanctions", "tariff", "commodity",
-        "import", "export",
+        "port",
+        "shipping",
+        "freight",
+        "cargo",
+        "container",
+        "vessel",
+        "maritime",
+        "logistics",
+        "warehouse",
+        "customs",
+        "shipment",
+        "tanker",
+        "shortage",
+        "disruption",
+        "bottleneck",
+        "backlog",
+        "congestion",
+        "closure",
+        "shutdown",
+        "blockade",
+        "embargo",
+        "strike",
+        "walkout",
+        "pipeline",
+        "refinery",
+        "semiconductor",
+        "factory",
+        "manufacturing",
+        "sanctions",
+        "tariff",
+        "commodity",
+        "import",
+        "export",
     ]
 
     # Reject terms — articles about these topics even if they match a keyword
     REJECT_TERMS = [
-        "denim", "fashion", "best time to book", "flight deal", "airfare",
-        "recipe", "restaurant", "movie", "album", "concert",
-        "football", "basketball", "baseball", "soccer",
-        "celebrity", "entertainment", "wedding", "dating",
-        "annual financial report", "company announcement",
-        "breakfast cereal", "fluoride",
+        "denim",
+        "fashion",
+        "best time to book",
+        "flight deal",
+        "airfare",
+        "recipe",
+        "restaurant",
+        "movie",
+        "album",
+        "concert",
+        "football",
+        "basketball",
+        "baseball",
+        "soccer",
+        "celebrity",
+        "entertainment",
+        "wedding",
+        "dating",
+        "annual financial report",
+        "company announcement",
+        "breakfast cereal",
+        "fluoride",
     ]
 
     if any(term in title_lower for term in REJECT_TERMS):
@@ -281,14 +369,16 @@ async def ingest_gdelt_news() -> int:
             )
             session.add(event)
             created += 1
-            new_events.append({
-                "id": event.id,
-                "title": event.title,
-                "severity": severity,
-                "severity_score": severity_score,
-                "event_type": event_type,
-                "affected_region": region,
-            })
+            new_events.append(
+                {
+                    "id": event.id,
+                    "title": event.title,
+                    "severity": severity,
+                    "severity_score": severity_score,
+                    "event_type": event_type,
+                    "affected_region": region,
+                }
+            )
             logger.info("GDELT: created risk event — %s [%s]", title[:80], severity)
 
         if created > 0:

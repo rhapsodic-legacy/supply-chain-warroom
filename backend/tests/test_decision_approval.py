@@ -37,9 +37,7 @@ class TestDecisionApprovalAPI:
     @pytest.mark.asyncio
     async def test_reject_proposed_decision(self, seeded_client):
         # Find another proposed decision
-        resp = await seeded_client.get(
-            "/api/v1/agents/decisions", params={"status": "proposed"}
-        )
+        resp = await seeded_client.get("/api/v1/agents/decisions", params={"status": "proposed"})
         decisions = resp.json()
         if not decisions:
             pytest.skip("No proposed decisions in seed data")
@@ -56,9 +54,7 @@ class TestDecisionApprovalAPI:
 
     @pytest.mark.asyncio
     async def test_cannot_approve_executed_decision(self, seeded_client):
-        resp = await seeded_client.get(
-            "/api/v1/agents/decisions", params={"status": "executed"}
-        )
+        resp = await seeded_client.get("/api/v1/agents/decisions", params={"status": "executed"})
         decisions = resp.json()
         if not decisions:
             pytest.skip("No executed decisions in seed data")

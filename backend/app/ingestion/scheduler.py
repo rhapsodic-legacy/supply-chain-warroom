@@ -22,6 +22,7 @@ async def _run_loop() -> None:
     from app.database import async_session_factory
     from app.ingestion.gdelt import ingest_gdelt_news
     from app.ingestion.weather import ingest_weather_alerts
+    from app.services.alert_rule_service import evaluate_all_rules
     from app.services.risk_analysis import run_agent_analysis, run_triage
 
     logger.info("Ingestion scheduler started")
@@ -48,6 +49,9 @@ async def _run_loop() -> None:
         try:
             async with async_session_factory() as session:
                 triage = await run_triage(session, total_new)
+
+                # Evaluate user-defined alert rules against current state
+                await evaluate_all_rules(session)
 
                 # Deep analysis only when triage finds concerning signals
                 if triage.get("suppliers_at_risk") or triage.get("regional_escalations"):

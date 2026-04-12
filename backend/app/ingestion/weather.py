@@ -214,15 +214,17 @@ async def ingest_weather_alerts() -> int:
             )
             session.add(event)
             created += 1
-            new_events.append({
-                "id": event.id,
-                "title": title,
-                "severity": severity,
-                "severity_score": score,
-                "event_type": "weather",
-                "affected_region": port["region"],
-                "description": desc,
-            })
+            new_events.append(
+                {
+                    "id": event.id,
+                    "title": title,
+                    "severity": severity,
+                    "severity_score": score,
+                    "event_type": "weather",
+                    "affected_region": port["region"],
+                    "description": desc,
+                }
+            )
             logger.info(
                 "Weather: created risk event — %s [%s] (%s)",
                 title,

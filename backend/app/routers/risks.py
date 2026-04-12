@@ -8,7 +8,7 @@ from app.services import risk_service
 router = APIRouter(prefix="/api/v1/risks", tags=["risks"])
 
 
-@router.get("/", response_model=list[RiskEventResponse])
+@router.get("", response_model=list[RiskEventResponse])
 async def list_risk_events(
     active_only: bool = Query(False),
     severity: str | None = Query(None),
@@ -25,6 +25,6 @@ async def get_risk_event(event_id: str, db: AsyncSession = Depends(get_db)):
     return event
 
 
-@router.post("/", response_model=RiskEventResponse, status_code=201)
+@router.post("", response_model=RiskEventResponse, status_code=201)
 async def create_risk_event(data: RiskEventCreate, db: AsyncSession = Depends(get_db)):
     return await risk_service.create_risk_event(db, data)

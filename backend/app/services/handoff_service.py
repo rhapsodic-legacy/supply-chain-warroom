@@ -40,13 +40,15 @@ async def list_sessions(db: AsyncSession, limit: int = 20) -> list[dict]:
         completed_times = [h.completed_at for h in items if h.completed_at]
         completed = max(completed_times) if completed_times else None
         total_ms = sum(h.duration_ms or 0 for h in items) if completed_times else None
-        output.append({
-            "session_id": sid,
-            "handoffs": items,
-            "started_at": started,
-            "completed_at": completed,
-            "total_duration_ms": total_ms,
-        })
+        output.append(
+            {
+                "session_id": sid,
+                "handoffs": items,
+                "started_at": started,
+                "completed_at": completed,
+                "total_duration_ms": total_ms,
+            }
+        )
 
     # Sort sessions by start time descending, cap at limit
     output.sort(key=lambda s: s["started_at"], reverse=True)

@@ -328,9 +328,118 @@ export interface ExecutiveSummary {
   };
 }
 
-/* ─── SSE Events ─── */
+/* ─── Alert Rules ─── */
+export interface AlertRule {
+  id: string;
+  name: string;
+  description: string | null;
+  metric: string;
+  operator: string;
+  threshold: number;
+  filter_region: string | null;
+  filter_supplier_id: string | null;
+  filter_severity: string | null;
+  severity: string;
+  trigger_agent_analysis: boolean;
+  is_enabled: boolean;
+  last_triggered_at: string | null;
+  trigger_count: number;
+  cooldown_minutes: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AlertRuleBrief {
+  id: string;
+  name: string;
+  metric: string;
+  operator: string;
+  threshold: number;
+  severity: string;
+  is_enabled: boolean;
+  trigger_count: number;
+  last_triggered_at: string | null;
+}
+
+export interface AlertRuleCreate {
+  name: string;
+  description?: string;
+  metric: string;
+  operator: string;
+  threshold: number;
+  filter_region?: string;
+  filter_supplier_id?: string;
+  filter_severity?: string;
+  severity?: string;
+  trigger_agent_analysis?: boolean;
+  cooldown_minutes?: number;
+}
+
+/* ─── Agent Memories ─── */
+export interface AgentMemory {
+  id: string;
+  agent_type: string;
+  decision_id: string | null;
+  trigger_event_id: string | null;
+  category: string;
+  affected_region: string | null;
+  severity: string | null;
+  risk_type: string | null;
+  situation: string;
+  action_taken: string;
+  outcome: string;
+  lesson: string;
+  confidence_score: number;
+  cost_impact: number | null;
+  time_impact_days: number | null;
+  occurrence_count: number;
+  last_referenced_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AgentMemoryBrief {
+  id: string;
+  agent_type: string;
+  category: string;
+  affected_region: string | null;
+  severity: string | null;
+  outcome: string;
+  lesson: string;
+  occurrence_count: number;
+  created_at: string;
+}
+
+export interface AgentMemoryStats {
+  total_memories: number;
+  by_outcome: Record<string, number>;
+  by_category: Record<string, number>;
+  by_agent: Record<string, number>;
+}
+
+/* ─── Real-time Events ─── */
+export type StreamEventType =
+  | 'risk_update'
+  | 'order_update'
+  | 'agent_action'
+  | 'agent_handoff'
+  | 'supply_alert'
+  | 'demo_step'
+  | 'heartbeat'
+  | 'connected'
+  | 'pong'
+  | 'filter_ack'
+  | 'error';
+
 export interface StreamEvent {
-  type: 'risk_update' | 'order_update' | 'agent_action' | 'agent_handoff' | 'supply_alert' | 'demo_step' | 'heartbeat';
+  type: StreamEventType;
   data: Record<string, unknown>;
   timestamp: string;
+}
+
+export type TransportKind = 'websocket' | 'sse';
+
+export interface ConnectionStatus {
+  transport: TransportKind;
+  connected: boolean;
 }

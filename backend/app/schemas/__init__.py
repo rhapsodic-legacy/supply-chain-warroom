@@ -1,5 +1,13 @@
 from app.schemas.agent import AgentDecisionBrief, AgentDecisionResponse, DecisionStatusUpdate
+from app.schemas.alert_rule import (
+    AlertRuleBrief,
+    AlertRuleCreate,
+    AlertRuleEvalSummary,
+    AlertRuleResponse,
+    AlertRuleUpdate,
+)
 from app.schemas.handoff import AgentHandoffResponse, AgentHandoffSessionResponse
+from app.schemas.memory import AgentMemoryBrief, AgentMemoryResponse, AgentMemoryStats
 from app.schemas.dashboard import (
     ChatMessage,
     ChatRequest,
@@ -51,6 +59,16 @@ __all__ = [
     # Handoff
     "AgentHandoffResponse",
     "AgentHandoffSessionResponse",
+    # Memory
+    "AgentMemoryBrief",
+    "AgentMemoryResponse",
+    "AgentMemoryStats",
+    # Alert Rules
+    "AlertRuleBrief",
+    "AlertRuleCreate",
+    "AlertRuleEvalSummary",
+    "AlertRuleResponse",
+    "AlertRuleUpdate",
     # Simulation
     "SimulationCreate",
     "SimulationBrief",

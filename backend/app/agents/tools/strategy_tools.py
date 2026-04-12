@@ -148,14 +148,17 @@ async def generate_mitigation_plan(
 
     from app.routers.stream import publish_event
 
-    await publish_event("agent_action", {
-        "action": f"Proposed mitigation: {strategy_description[:100]}",
-        "agent_type": "strategy",
-        "decision_type": "mitigation_plan",
-        "decision_id": decision.id,
-        "confidence": min(risk_reduction_pct / 100.0, 1.0),
-        "status": "proposed",
-    })
+    await publish_event(
+        "agent_action",
+        {
+            "action": f"Proposed mitigation: {strategy_description[:100]}",
+            "agent_type": "strategy",
+            "decision_type": "mitigation_plan",
+            "decision_id": decision.id,
+            "confidence": min(risk_reduction_pct / 100.0, 1.0),
+            "status": "proposed",
+        },
+    )
 
     return json.dumps(
         {

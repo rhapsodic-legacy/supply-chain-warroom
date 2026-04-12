@@ -82,9 +82,13 @@ async def _build_context(db: AsyncSession, sim_id: str) -> dict | None:
     time_horizon = comparison.get("time_horizon_days", 90)
     cost_change_pct = comparison.get("cost_change_pct", 0)
     baseline_cost = baseline.get("total_cost", 0)
-    avoided_loss = abs(cost_change_pct / 100 * baseline_cost * (time_horizon / 90)) if baseline_cost else 0
+    avoided_loss = (
+        abs(cost_change_pct / 100 * baseline_cost * (time_horizon / 90)) if baseline_cost else 0
+    )
 
-    roi_pct = ((avoided_loss - mitigation_cost) / mitigation_cost * 100) if mitigation_cost > 0 else 0
+    roi_pct = (
+        ((avoided_loss - mitigation_cost) / mitigation_cost * 100) if mitigation_cost > 0 else 0
+    )
     payback_days = (mitigation_cost / revenue_at_risk) if revenue_at_risk > 0 else None
 
     return {
@@ -177,7 +181,9 @@ def _generate_template_summary(ctx: dict) -> dict[str, dict[str, str]]:
             f"\n  Region: {r.get('affected_region', 'N/A')}"
             f"\n  {r['description']}"
         )
-    disruption_summary = "\n\n".join(disruption_lines) if disruption_lines else "No active risk events."
+    disruption_summary = (
+        "\n\n".join(disruption_lines) if disruption_lines else "No active risk events."
+    )
 
     # Monte Carlo Results
     mc_results = (
@@ -208,7 +214,9 @@ def _generate_template_summary(ctx: dict) -> dict[str, dict[str, str]]:
             f"**{d['agent_type'].replace('_', ' ').title()}** — {d['summary']}\n"
             f"  Confidence: {conf_str} | Cost impact: {cost_str} | Status: {d['status']}"
         )
-    agent_recommendations = "\n\n".join(rec_lines) if rec_lines else "No agent recommendations available."
+    agent_recommendations = (
+        "\n\n".join(rec_lines) if rec_lines else "No agent recommendations available."
+    )
 
     # ROI Analysis
     roi_analysis = (
@@ -224,7 +232,10 @@ def _generate_template_summary(ctx: dict) -> dict[str, dict[str, str]]:
     )
 
     # Risk Matrix
-    matrix_lines = ["| Event | Severity | Score | Region |", "|-------|----------|-------|--------|"]
+    matrix_lines = [
+        "| Event | Severity | Score | Region |",
+        "|-------|----------|-------|--------|",
+    ]
     for r in risks:
         score = f"{r.get('severity_score', 'N/A')}" if r.get("severity_score") else "N/A"
         matrix_lines.append(
@@ -236,7 +247,10 @@ def _generate_template_summary(ctx: dict) -> dict[str, dict[str, str]]:
         "executive_overview": {"title": "Executive Overview", "content": executive_overview},
         "disruption_summary": {"title": "Disruption Summary", "content": disruption_summary},
         "monte_carlo_results": {"title": "Monte Carlo Analysis", "content": mc_results},
-        "agent_recommendations": {"title": "Agent Recommendations", "content": agent_recommendations},
+        "agent_recommendations": {
+            "title": "Agent Recommendations",
+            "content": agent_recommendations,
+        },
         "roi_analysis": {"title": "ROI Analysis", "content": roi_analysis},
         "risk_matrix": {"title": "Risk Matrix", "content": risk_matrix},
     }
@@ -263,9 +277,7 @@ Keep the total under 800 words. Tone: professional, concise, data-forward.
 """
 
 
-async def _generate_llm_summary(
-    ctx: dict, tier: str
-) -> dict[str, dict[str, str]] | None:
+async def _generate_llm_summary(ctx: dict, tier: str) -> dict[str, dict[str, str]] | None:
     """Generate summary sections via Claude or Gemma."""
     context_str = json.dumps(ctx, indent=2, default=str)
 
@@ -278,7 +290,12 @@ async def _generate_llm_summary(
                 model="claude-sonnet-4-20250514",
                 max_tokens=2000,
                 system=_SUMMARY_SYSTEM_PROMPT,
-                messages=[{"role": "user", "content": f"Generate the executive brief from this data:\n\n{context_str}"}],
+                messages=[
+                    {
+                        "role": "user",
+                        "content": f"Generate the executive brief from this data:\n\n{context_str}",
+                    }
+                ],
             )
             text = resp.content[0].text
         except Exception:

@@ -8,7 +8,7 @@ from app.services import dashboard_service
 router = APIRouter(prefix="/api/v1/dashboard", tags=["dashboard"])
 
 
-@router.get("/", response_model=DashboardOverview)
+@router.get("", response_model=DashboardOverview)
 async def get_dashboard_overview(db: AsyncSession = Depends(get_db)):
     return await dashboard_service.get_overview(db)
 

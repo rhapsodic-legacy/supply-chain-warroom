@@ -6,6 +6,8 @@ from app.models.demand import DemandSignal
 from app.models.risk_event import RiskEvent, RiskEventImpact
 from app.models.agent_decision import AgentDecision
 from app.models.agent_handoff import AgentHandoff
+from app.models.agent_memory import AgentMemory
+from app.models.alert_rule import AlertRule
 from app.models.simulation import Simulation
 
 __all__ = [
@@ -20,5 +22,7 @@ __all__ = [
     "RiskEventImpact",
     "AgentDecision",
     "AgentHandoff",
+    "AgentMemory",
+    "AlertRule",
     "Simulation",
 ]

@@ -8,10 +8,9 @@ from datetime import datetime, timedelta
 import pytest
 from sqlalchemy import select
 
-from app.models import Order, RiskEvent, Supplier
+from app.models import RiskEvent, Supplier
 from app.services.risk_analysis import (
     REGIONAL_ESCALATION_THRESHOLD,
-    SUPPLIER_RISK_ALERT_THRESHOLD,
     _check_regional_escalation,
     _get_new_events,
     _score_suppliers,
@@ -84,7 +83,10 @@ class TestSupplierScoring:
         scores = await _score_suppliers(db_session)
         by_name = {s["supplier_name"]: s for s in scores}
 
-        assert by_name["EA Supplier"]["composite_risk_score"] > by_name["EU Supplier"]["composite_risk_score"]
+        assert (
+            by_name["EA Supplier"]["composite_risk_score"]
+            > by_name["EU Supplier"]["composite_risk_score"]
+        )
 
     @pytest.mark.asyncio
     async def test_low_reliability_increases_score(self, db_session):
@@ -97,7 +99,10 @@ class TestSupplierScoring:
         scores = await _score_suppliers(db_session)
         by_name = {s["supplier_name"]: s for s in scores}
 
-        assert by_name["Unreliable"]["composite_risk_score"] > by_name["Reliable"]["composite_risk_score"]
+        assert (
+            by_name["Unreliable"]["composite_risk_score"]
+            > by_name["Reliable"]["composite_risk_score"]
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -216,7 +221,7 @@ class TestRunTriage:
         db_session.add(_make_supplier(region="Central Asia", name="CA Supplier"))
         await db_session.flush()
 
-        result1 = await run_triage(db_session, new_event_count=3)
+        await run_triage(db_session, new_event_count=3)
         await db_session.commit()
 
         result2 = await run_triage(db_session, new_event_count=1)

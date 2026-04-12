@@ -1,51 +1,135 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useDashboardStore } from '../stores/dashboardStore';
 import { useDemoStore } from '../stores/demoStore';
-import type { StreamEvent, Notification } from '../types/api';
+import type { StreamEvent, Notification, TransportKind } from '../types/api';
 
 let idCounter = 0;
 function makeId() {
-  return `sse-${Date.now()}-${++idCounter}`;
+  return `evt-${Date.now()}-${++idCounter}`;
+}
+
+/** Shared WebSocket ref for bidirectional messaging from anywhere in the app. */
+let _ws: WebSocket | null = null;
+
+/**
+ * Send a message to the backend via WebSocket.
+ * Returns false if WebSocket is not connected (caller can fall back to REST).
+ */
+export function sendWsMessage(action: string, data: Record<string, unknown> = {}): boolean {
+  if (_ws && _ws.readyState === WebSocket.OPEN) {
+    _ws.send(JSON.stringify({ action, ...data }));
+    return true;
+  }
+  return false;
+}
+
+/** Current transport kind — useful for UI indicators. */
+let _transport: TransportKind = 'sse';
+export function getTransport(): TransportKind {
+  return _transport;
 }
 
 export function useEventStream() {
   const qc = useQueryClient();
   const addNotification = useDashboardStore((s) => s.addNotification);
-  const sourceRef = useRef<EventSource | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+  const sseRef = useRef<EventSource | null>(null);
+  const reconnectTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  const handleParsed = useCallback(
+    (parsed: StreamEvent) => {
+      handleEvent(parsed, qc, addNotification);
+    },
+    [qc, addNotification],
+  );
 
   useEffect(() => {
     const baseUrl = import.meta.env.VITE_API_URL || '';
-    const url = `${baseUrl}/api/v1/stream`;
 
-    const source = new EventSource(url);
-    sourceRef.current = source;
+    // ── Helpers ────────────────────────────────────────────
+    function cleanup() {
+      clearTimeout(reconnectTimer.current);
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+        _ws = null;
+      }
+      if (sseRef.current) {
+        sseRef.current.close();
+        sseRef.current = null;
+      }
+    }
 
-    source.onmessage = (event) => {
+    function onMessage(raw: string) {
       try {
-        const parsed: StreamEvent = JSON.parse(event.data);
-        handleEvent(parsed, qc, addNotification);
+        const parsed: StreamEvent = JSON.parse(raw);
+        handleParsed(parsed);
       } catch {
         // ignore malformed messages
       }
-    };
+    }
 
-    source.onerror = () => {
-      // EventSource reconnects automatically
-      console.warn('[SSE] Connection lost, reconnecting...');
-    };
+    // ── SSE fallback ──────────────────────────────────────
+    function connectSSE() {
+      cleanup();
+      _transport = 'sse';
+      const url = `${baseUrl}/api/v1/stream`;
+      const source = new EventSource(url);
+      sseRef.current = source;
 
-    return () => {
-      source.close();
-      sourceRef.current = null;
-    };
-  }, [qc, addNotification]);
+      source.onmessage = (event) => onMessage(event.data);
+
+      source.onerror = () => {
+        console.warn('[SSE] Connection lost, reconnecting...');
+      };
+    }
+
+    // ── WebSocket primary ─────────────────────────────────
+    function connectWS() {
+      cleanup();
+
+      // Derive WS URL from the HTTP base
+      const wsBase = baseUrl
+        ? baseUrl.replace(/^http/, 'ws')
+        : `ws://${window.location.host}`;
+      const url = `${wsBase}/api/v1/ws`;
+
+      const ws = new WebSocket(url);
+      wsRef.current = ws;
+      _ws = ws;
+
+      ws.onopen = () => {
+        _transport = 'websocket';
+        console.info('[WS] Connected');
+      };
+
+      ws.onmessage = (event) => onMessage(event.data);
+
+      ws.onclose = (event) => {
+        _ws = null;
+        if (event.code === 1000) return; // clean close on unmount
+
+        console.warn('[WS] Connection lost, falling back to SSE');
+        connectSSE();
+      };
+
+      ws.onerror = () => {
+        // onerror is always followed by onclose — SSE fallback happens there
+      };
+    }
+
+    // Start with WebSocket
+    connectWS();
+
+    return cleanup;
+  }, [handleParsed]);
 }
 
 function handleEvent(
   event: StreamEvent,
   qc: ReturnType<typeof useQueryClient>,
-  addNotification: (n: Notification) => void
+  addNotification: (n: Notification) => void,
 ) {
   switch (event.type) {
     case 'risk_update':
@@ -109,8 +193,15 @@ function handleEvent(
       break;
     }
 
+    case 'connected':
+      console.info('[WS] Server confirmed:', event.data);
+      break;
+
     case 'heartbeat':
-      // no-op
+    case 'pong':
+    case 'filter_ack':
+    case 'error':
+      // no-op for UI — handled internally
       break;
   }
 }

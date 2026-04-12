@@ -8,7 +8,7 @@ from app.services import order_service
 router = APIRouter(prefix="/api/v1/orders", tags=["orders"])
 
 
-@router.get("/", response_model=list[OrderBrief])
+@router.get("", response_model=list[OrderBrief])
 async def list_orders(
     status: str | None = Query(None),
     supplier_id: str | None = Query(None),

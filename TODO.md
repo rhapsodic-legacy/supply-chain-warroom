@@ -22,15 +22,15 @@
 
 ## Tier 4 — Deepen Technical Impressiveness
 
-- [ ] **WebSocket upgrade** — Replace SSE with WebSockets for bidirectional real-time (shows you know the tradeoffs). Graceful fallback to SSE for environments that don't support WS.
-- [ ] **Agent memory / learning** — Agents reference past decisions to improve recommendations over time. Store learned patterns in a memory layer, surface "last time this happened, we..." context.
-- [ ] **Alerting rules engine** — Let users define custom alert thresholds (e.g. "notify me when any supplier reliability drops below 0.7") that trigger agent analysis automatically.
+- [x] **WebSocket upgrade** — Replace SSE with WebSockets for bidirectional real-time (shows you know the tradeoffs). Graceful fallback to SSE for environments that don't support WS.
+- [x] **Agent memory / learning** — Agents reference past decisions to improve recommendations over time. Store learned patterns in a memory layer, surface "last time this happened, we..." context.
+- [x] **Alerting rules engine** — Let users define custom alert thresholds (e.g. "notify me when any supplier reliability drops below 0.7") that trigger agent analysis automatically.
 
 ## Tier 5 — Ship & Present
 
-- [ ] **Capture README screenshots/GIFs** — Take dashboard, simulation, comparison, executive summary, agent pipeline screenshots + demo mode GIF. See docs/assets/SCREENSHOTS.md for guide.
-- [ ] **Live deployment** — Deploy to Railway (backend + Postgres) and Vercel (frontend) so interviewers can click a link.
-- [ ] **Video walkthrough** — 2-minute Loom walking through demo mode end-to-end for portfolio.
+- [ ] **Capture README screenshots/GIFs** — Take dashboard, simulation, comparison, executive summary, agent pipeline screenshots + demo mode GIF. See docs/PRESENTATION_PLAN.md for full shot list and capture sequence.
+- [x] **Live deployment** — Docker Compose prod mode (nginx + built SPA), Railway config (backend + Postgres), Vercel config (frontend). See docs/PRESENTATION_PLAN.md.
+- [ ] **Video walkthrough** — 2-minute narrated demo with TTS voiceover. Full script and production steps in docs/PRESENTATION_PLAN.md.
 
 ## Completed
 
