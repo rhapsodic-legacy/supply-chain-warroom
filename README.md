@@ -26,7 +26,7 @@
 
 ---
 
-> Built with the Claude Agent SDK, five specialized AI agents collaborate to monitor a global supply chain, detect emerging risks, run Monte Carlo simulations, propose cost-optimized mitigations, and execute decisions -- all through a command-center dashboard with conversational AI.  
+> Built with the Claude Agent SDK, five specialized AI agents collaborate to monitor a global supply chain, detect emerging risks, run Monte Carlo simulations, propose cost-optimized mitigations, and execute decisions -- all through a command-center dashboard with conversational AI.   
 
 ---
 
