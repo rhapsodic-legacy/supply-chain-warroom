@@ -70,7 +70,7 @@
 | **Custom Alert Rules** | Define threshold-based rules (e.g. "supplier reliability < 0.7") that auto-evaluate after every ingestion cycle. Fires risk alerts and optionally triggers agent analysis. |
 | **Conversational Interface** | Ask agents anything: "Why did you reroute PO-2025-0042?" and get the full reasoning chain. |
 
-### Demo & Presentation
+### Demo & Presentation 
 
 | Feature | Description |
 |---------|-------------|
