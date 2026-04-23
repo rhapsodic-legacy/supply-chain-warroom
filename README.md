@@ -30,7 +30,7 @@
 
 ---
 
-## Screenshots   
+## Screenshots    
 
 <p align="center">
   <img src="docs/assets/main_1.jpg" alt="War Room Dashboard — Map, Agent Log, Alert Rules" width="800" />
