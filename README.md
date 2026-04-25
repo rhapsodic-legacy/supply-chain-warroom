@@ -48,7 +48,7 @@
 
 ## Features  
 
-### Core Intelligence 
+### Core Intelligence  
 
 | Feature | Description |
 |---------|-------------|
