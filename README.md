@@ -59,7 +59,7 @@
 | **AI-Powered Strategy** | Agents generate mitigation plans with cost-benefit analysis, alternative suppliers, and rerouting options. |
 | **Executive Summary** | After any simulation, generate a boardroom-ready brief with disruption analysis, Monte Carlo results, agent recommendations, and ROI calculations. 3-tier LLM fallback (Claude > Gemma > template). |
 
-### Agentic Capabilities
+### Agentic Capabilities 
 
 | Feature | Description |
 |---------|-------------|
