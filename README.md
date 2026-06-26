@@ -1,4 +1,4 @@
-<p align="center">
+<p align="center"> 
   <img src="docs/assets/war-room-banner.svg" alt="Supply Chain War Room" width="800" />
 </p>
 
