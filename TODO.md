@@ -1,4 +1,4 @@
-# Supply Chain War Room — Roadmap
+# Supply Chain War Room — Roadmap 
 
 > Living task list. Priorities ordered top-to-bottom within each tier.
 
